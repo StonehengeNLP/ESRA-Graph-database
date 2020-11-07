@@ -7,6 +7,7 @@ password = settings.NEO4J_PASSWORD
 host = settings.NEO4J_HOST
 port = settings.NEO4J_PORT
 
+
 config.DATABASE_URL = f'bolt://{username}:{password}@{host}:{port}'
 
 # class Book(StructuredNode):
@@ -31,8 +32,14 @@ def deleteData():
 
 deleteData()
 
-t = models.Task(name='tongtong').save()
-t = models.Task(name='tongtong').save()
 
-for a in t.nodes:
-    print(a)
+t = models.Task(name='Tong').save()
+mc = models.Metric(name='Win').save()
+md = models.Method(name='Pinn').save()
+
+mc.task_partOf.connect(t)
+md.metric_isA.connect(mc)
+
+# for a in t.nodes:
+#     print(a)
+
