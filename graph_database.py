@@ -59,14 +59,13 @@ class GraphDatabase():
     def is_relation_exist(self, relation_type, relation_name, entity_1, entity_2):
         assert isinstance(entity_1, models.BaseEntity)
         assert isinstance(entity_2, models.BaseEntity)
-        relation_model = GraphDatabase.RELATION_MODEL[relation_type]
-        target_relation = relation_model.nodes.first_or_none(name=relation_name)
-        if target_relation == None:
-            return False
-        return True
+        # relation_model = GraphDatabase.RELATION_MODEL[relation_type]
+        # target_relation = relation_model.nodes.first_or_none(name=relation_name)
+        # if target_relation == None:
+        #     return False
+        # return True
     
     def add_relation(self, relation_type, relation_name, entity_1, entity_2):
         assert isinstance(entity_1, models.BaseEntity)
         assert isinstance(entity_2, models.BaseEntity)
-        # self.is_relation_exist()
-        pass
+        # self.is_relation_exist(relation_type, relation_name, entity_1, entity_2)
