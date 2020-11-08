@@ -23,6 +23,8 @@ class GraphDatabase():
         'Refer-to': models.ReferTo,
         'Compare': models.Compare,
         'Evaluate-for': models.EvaluateFor,
+        'Is-a': models.IsA,
+        'Appear-in': models.AppearIn,
     }
 
     def __init__(self):
@@ -54,19 +56,55 @@ class GraphDatabase():
             target_entity.count += 1
         else:
             entity_model = GraphDatabase.ENTITY_MODEL[entity_type]
-            target_entity = entity_model(name=entity_name).save()
+            target_entity = entity_model(name=entity_name)
+        target_entity.save()
         return target_entity
     
-    def is_relation_exist(self, relation_type, relation_name, entity_1, entity_2):
-        assert isinstance(entity_1, models.BaseEntity)
-        assert isinstance(entity_2, models.BaseEntity)
-        # relation_model = GraphDatabase.RELATION_MODEL[relation_type]
-        # target_relation = relation_model.nodes.first_or_none(name=relation_name)
-        # if target_relation == None:
-        #     return False
-        # return True
+    def is_relation_exist(self, relation_type, head_entity, tail_entity):
+        assert isinstance(head_entity, models.BaseEntity)
+        assert isinstance(tail_entity, models.BaseEntity)
+        if relation_type == 'Hyponym-of':
+            relationship = head_entity.hyponym_of.relationship(tail_entity)
+        elif relation_type == 'Feature-of':
+            relationship = head_entity.feature_of.relationship(tail_entity)
+        elif relation_type == 'Used-for':
+            relationship = head_entity.used_for.relationship(tail_entity)
+        elif relation_type == 'Part-of':
+            relationship = head_entity.part_of.relationship(tail_entity)
+        elif relation_type == 'Refer-to':
+            relationship = head_entity.refer_to.relationship(tail_entity)
+        elif relation_type == 'Compare':
+            relationship = head_entity.compare.relationship(tail_entity)
+        elif relation_type == 'Evaluate-for':
+            relationship = head_entity.evaluate_for.relationship(tail_entity)
+        if relationship == None:
+            return False
+        return True
+        
     
-    def add_relation(self, relation_type, relation_name, entity_1, entity_2):
-        assert isinstance(entity_1, models.BaseEntity)
-        assert isinstance(entity_2, models.BaseEntity)
-        # self.is_relation_exist(relation_type, relation_name, entity_1, entity_2)
+    def add_relation(self, relation_type, head_entity, tail_entity):
+        assert isinstance(head_entity, models.BaseEntity)
+        assert isinstance(tail_entity, models.BaseEntity)
+        
+        if relation_type == 'Hyponym-of':
+            head_relation = head_entity.hyponym_of
+        elif relation_type == 'Feature-of':
+            head_relation = head_entity.feature_of
+        elif relation_type == 'Used-for':
+            head_relation = head_entity.used_for
+        elif relation_type == 'Part-of':
+            head_relation = head_entity.part_of
+        elif relation_type == 'Refer-to':
+            head_relation = head_entity.refer_to
+        elif relation_type == 'Compare':
+            head_relation = head_entity.compare
+        elif relation_type == 'Evaluate-for':
+            head_relation = head_entity.evaluate_for
+            
+        if self.is_relation_exist(relation_type, head_entity, tail_entity):
+            relationship = head_relation.relationship(tail_entity)
+            relationship.count += 1
+        else:
+            relationship = head_relation.connect(tail_entity)
+        relationship.save()
+        return relationship
