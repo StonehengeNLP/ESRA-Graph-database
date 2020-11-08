@@ -35,7 +35,7 @@ for doc in data:
     entity_cache = []
     for entity_type, entity_name, confidence, *args in entities:
         entity = graph_database.add_entity(entity_type, entity_name, confidence)
-        graph_database.add_relation('Appear-in', entity, paper_entity)
+        graph_database.add_relation('Appear-in', entity, paper_entity, confidence)
         entity_cache += [entity]
     for relation_type, head, tail, confidence, *args in relations:
         graph_database.add_relation(relation_type, 
