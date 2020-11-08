@@ -14,6 +14,7 @@ class GraphDatabase():
         'Abbreviation': models.Abbreviation,
         'Paper': models.Paper,
         'Author': models.Author,
+        'Category': models.Category,
         }
     
     # RELATION_MODEL = {
@@ -88,6 +89,8 @@ class GraphDatabase():
             relationship = head_entity.appear_in.relationship(tail_entity)
         elif relation_type == 'Author-of':
             relationship = head_entity.author_of.relationship(tail_entity)
+        elif relation_type == 'In-category':
+            relationship = head_entity.in_category.relationship(tail_entity)
         if relationship == None:
             return False
         return True
@@ -116,6 +119,8 @@ class GraphDatabase():
             head_relation = head_entity.appear_in
         elif relation_type == 'Author-of':
             head_relation = head_entity.author_of
+        elif relation_type == 'In-category':
+            head_relation = head_entity.in_category
             
         if self.is_relation_exist(relation_type, head_entity, tail_entity):
             relationship = head_relation.relationship(tail_entity)
