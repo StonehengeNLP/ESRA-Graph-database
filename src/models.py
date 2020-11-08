@@ -9,9 +9,7 @@ class BaseRelation(neomodel.StructuredRel):
     # properties
     count = neomodel.IntegerProperty(default=1)
     weight = FloatProperty(default=0)
-    create_at = DateTimeProperty(
-        default=lambda: datetime.now() # no specific timezone 
-    )
+    create_at = DateTimeFormatProperty(format="%Y-%m-%d %H:%M:%S", default_now=True)
 
 class HyponymOf(BaseRelation):
     pass
@@ -44,9 +42,7 @@ class BaseEntity(neomodel.StructuredNode):
     name = neomodel.StringProperty(unique_index=True)
     count = neomodel.IntegerProperty(default=1)
     weight = FloatProperty(default=0)
-    create_at = DateTimeProperty(
-        default=lambda: datetime.now() # no specific timezone 
-    )
+    create_at = DateTimeFormatProperty(format="%Y-%m-%d %H:%M:%S", default_now=True)
     
     # GOD attributes: relation from head (self) to Tail (other)
     used_for = neomodel.RelationshipTo(neomodel.StructuredNode, 'Used-for', model=UsedFor)
