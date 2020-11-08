@@ -50,13 +50,16 @@ class GraphDatabase():
             return False
         return True
     
-    def add_entity(self, entity_type, entity_name):
+    def add_entity(self, entity_type, entity_name, confidence=1):
         if self.is_entity_exist(entity_type, entity_name):
             target_entity = self.get_entity(entity_type, entity_name)
             target_entity.count += 1
+            _weight_diff = (confidence - target_entity.weight) / target_entity.count
+            target_entity.weight += _weight_diff
         else:
             entity_model = GraphDatabase.ENTITY_MODEL[entity_type]
             target_entity = entity_model(name=entity_name)
+            target_entity.weight = confidence
         target_entity.save()
         return target_entity
     
@@ -81,8 +84,7 @@ class GraphDatabase():
             return False
         return True
         
-    
-    def add_relation(self, relation_type, head_entity, tail_entity):
+    def add_relation(self, relation_type, head_entity, tail_entity, confidence=1):
         assert isinstance(head_entity, models.BaseEntity)
         assert isinstance(tail_entity, models.BaseEntity)
         
@@ -104,7 +106,10 @@ class GraphDatabase():
         if self.is_relation_exist(relation_type, head_entity, tail_entity):
             relationship = head_relation.relationship(tail_entity)
             relationship.count += 1
+            _weight_diff = (confidence - relationship.weight) / relationship.count
+            relationship.weight += _weight_diff
         else:
             relationship = head_relation.connect(tail_entity)
+            relationship.weight = confidence
         relationship.save()
         return relationship
