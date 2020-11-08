@@ -41,6 +41,9 @@ class AppearIn(BaseRelation):
 class AuthorOf(BaseRelation):
     pass
 
+class InCategory(BaseRelation):
+    pass
+
 class BaseEntity(neomodel.StructuredNode):
     name = neomodel.StringProperty(unique_index=True)
     count = neomodel.IntegerProperty(default=1)
@@ -58,6 +61,7 @@ class BaseEntity(neomodel.StructuredNode):
     is_a = neomodel.RelationshipTo(neomodel.StructuredNode, 'Is-a', model=IsA)
     appear_in = neomodel.RelationshipTo(neomodel.StructuredNode, 'Appear-in', model=AppearIn)
     author_of = neomodel.RelationshipTo(neomodel.StructuredNode, 'Author-of', model=AuthorOf)
+    in_category = neomodel.RelationshipTo(neomodel.StructuredNode, 'In-category', model=InCategory)
     
     #  #relation from Task to ...
     # task_usedFor = neomodel.RelationshipTo('Task', 'Used-for')
@@ -223,4 +227,7 @@ class Paper(BaseEntity):
     created = DateTimeFormatProperty(format="%Y-%m-%d %H:%M:%S", required=True)
 
 class Author(BaseEntity):
+    name = neomodel.StringProperty(unique_index=True)
+
+class Category(BaseEntity):
     name = neomodel.StringProperty(unique_index=True)
