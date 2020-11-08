@@ -7,6 +7,7 @@ class BaseEntity(neomodel.StructuredNode):
     create_at = DateTimeProperty(
         default=datetime.now() # no specific timezone 
     )
+    count = neomodel.IntegerProperty(default=1)
 
     #relation from Task to ...
     task_usedFor = neomodel.RelationshipTo('Task', 'Used-for',model=UsedFor)
