@@ -74,31 +74,38 @@ class GraphDatabase():
         target_entity.save()
         return target_entity
     
+    def get_relation(self, relation_type, head_entity):
+        assert isinstance(head_entity, models.BaseEntity)
+        if relation_type == 'Hyponym-of':
+            relation = head_entity.hyponym_of
+        elif relation_type == 'Feature-of':
+            relation = head_entity.feature_of
+        elif relation_type == 'Used-for':
+            relation = head_entity.used_for
+        elif relation_type == 'Part-of':
+            relation = head_entity.part_of
+        elif relation_type == 'Refer-to':
+            relation = head_entity.refer_to
+        elif relation_type == 'Compare':
+            relation = head_entity.compare
+        elif relation_type == 'Evaluate-for':
+            relation = head_entity.evaluate_for
+        elif relation_type == 'Is-a':
+            relation = head_entity.is_a
+        elif relation_type == 'Appear-in':
+            relation = head_entity.appear_in
+        elif relation_type == 'Author-of':
+            relation = head_entity.author_of
+        elif relation_type == 'In-category':
+            relation = head_entity.in_category
+        return relation
+    
     def is_relation_exist(self, relation_type, head_entity, tail_entity):
         assert isinstance(head_entity, models.BaseEntity)
         assert isinstance(tail_entity, models.BaseEntity)
-        if relation_type == 'Hyponym-of':
-            relationship = head_entity.hyponym_of.relationship(tail_entity)
-        elif relation_type == 'Feature-of':
-            relationship = head_entity.feature_of.relationship(tail_entity)
-        elif relation_type == 'Used-for':
-            relationship = head_entity.used_for.relationship(tail_entity)
-        elif relation_type == 'Part-of':
-            relationship = head_entity.part_of.relationship(tail_entity)
-        elif relation_type == 'Refer-to':
-            relationship = head_entity.refer_to.relationship(tail_entity)
-        elif relation_type == 'Compare':
-            relationship = head_entity.compare.relationship(tail_entity)
-        elif relation_type == 'Evaluate-for':
-            relationship = head_entity.evaluate_for.relationship(tail_entity)
-        elif relation_type == 'Is-a':
-            relationship = head_entity.is_a.relationship(tail_entity)
-        elif relation_type == 'Appear-in':
-            relationship = head_entity.appear_in.relationship(tail_entity)
-        elif relation_type == 'Author-of':
-            relationship = head_entity.author_of.relationship(tail_entity)
-        elif relation_type == 'In-category':
-            relationship = head_entity.in_category.relationship(tail_entity)
+        
+        relation = self.get_relation(relation_type, head_entity)
+        relationship = relation.relationship(tail_entity)
         if relationship == None:
             return False
         return True
@@ -107,36 +114,14 @@ class GraphDatabase():
         assert isinstance(head_entity, models.BaseEntity)
         assert isinstance(tail_entity, models.BaseEntity)
         
-        if relation_type == 'Hyponym-of':
-            head_relation = head_entity.hyponym_of
-        elif relation_type == 'Feature-of':
-            head_relation = head_entity.feature_of
-        elif relation_type == 'Used-for':
-            head_relation = head_entity.used_for
-        elif relation_type == 'Part-of':
-            head_relation = head_entity.part_of
-        elif relation_type == 'Refer-to':
-            head_relation = head_entity.refer_to
-        elif relation_type == 'Compare':
-            head_relation = head_entity.compare
-        elif relation_type == 'Evaluate-for':
-            head_relation = head_entity.evaluate_for
-        elif relation_type == 'Is-a':
-            head_relation = head_entity.is_a
-        elif relation_type == 'Appear-in':
-            head_relation = head_entity.appear_in
-        elif relation_type == 'Author-of':
-            head_relation = head_entity.author_of
-        elif relation_type == 'In-category':
-            head_relation = head_entity.in_category
-            
+        relation = self.get_relation(relation_type, head_entity)
         if self.is_relation_exist(relation_type, head_entity, tail_entity):
-            relationship = head_relation.relationship(tail_entity)
+            relationship = relation.relationship(tail_entity)
             relationship.count += 1
             _weight_diff = (confidence - relationship.weight) / relationship.count
             relationship.weight += _weight_diff
         else:
-            relationship = head_relation.connect(tail_entity)
+            relationship = relation.connect(tail_entity)
             relationship.weight = confidence
         relationship.__dict__.update(kwargs)
         relationship.save()
