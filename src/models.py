@@ -38,6 +38,9 @@ class IsA(BaseRelation):
 class AppearIn(BaseRelation):
     pass
 
+class AuthorOf(BaseRelation):
+    pass
+
 class BaseEntity(neomodel.StructuredNode):
     name = neomodel.StringProperty(unique_index=True)
     count = neomodel.IntegerProperty(default=1)
@@ -54,6 +57,7 @@ class BaseEntity(neomodel.StructuredNode):
     refer_to = neomodel.RelationshipTo(neomodel.StructuredNode, 'Refer-to', model=ReferTo)
     is_a = neomodel.RelationshipTo(neomodel.StructuredNode, 'Is-a', model=IsA)
     appear_in = neomodel.RelationshipTo(neomodel.StructuredNode, 'Appear-in', model=AppearIn)
+    author_of = neomodel.RelationshipTo(neomodel.StructuredNode, 'Author-of', model=AuthorOf)
     
     #  #relation from Task to ...
     # task_usedFor = neomodel.RelationshipTo('Task', 'Used-for')
@@ -214,6 +218,9 @@ class Abbreviation(BaseEntity):
     abbreviation_referTo = neomodel.RelationshipTo('Abbreviation', 'Refer-to')
     abbreviation_isA = neomodel.RelationshipTo('Abbreviation', 'Is-a')
 
-
 class Paper(BaseEntity):
-    paper_isA = neomodel.RelationshipTo('Paper', 'Is-a',model=IsA)
+    paper_isA = neomodel.RelationshipTo('Paper', 'Is-a', model=IsA)
+    created = DateTimeFormatProperty(format="%Y-%m-%d %H:%M:%S", required=True)
+
+class Author(BaseEntity):
+    name = neomodel.StringProperty(unique_index=True)
