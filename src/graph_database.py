@@ -92,7 +92,7 @@ class GraphDatabase():
             return False
         return True
         
-    def add_relation(self, relation_type, head_entity, tail_entity, confidence=1):
+    def add_relation(self, relation_type, head_entity, tail_entity, confidence=1, **kwargs):
         assert isinstance(head_entity, models.BaseEntity)
         assert isinstance(tail_entity, models.BaseEntity)
         
@@ -125,5 +125,6 @@ class GraphDatabase():
         else:
             relationship = head_relation.connect(tail_entity)
             relationship.weight = confidence
+        relationship.__dict__.update(kwargs)
         relationship.save()
         return relationship
