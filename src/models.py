@@ -227,7 +227,7 @@ class Paper(BaseEntity):
     created = DateTimeFormatProperty(format="%Y-%m-%d %H:%M:%S", required=True)
 
 class Author(BaseEntity):
-    name = neomodel.StringProperty(unique_index=True)
+    pass
 
 class Category(BaseEntity):
-    name = neomodel.StringProperty(unique_index=True)
+    pass
