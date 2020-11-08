@@ -18,18 +18,17 @@ DIMENTIONS = 768
 NUM_TREE = 10
 NUM_NEIGHBOR = 3
 SIMILARITY_THRESHOLD = 0.9
-pickle_path = '../../pickle/vectors_9.pickle'
-
 class Entity_Linker:
     
-    self.tokenizer = BertTokenizer.from_pretrained(
+    tokenizer = BertTokenizer.from_pretrained(
         'allenai/scibert_scivocab_uncased'
     )
-    self.model = BertModel.from_pretrained(
+    model = BertModel.from_pretrained(
         'allenai/scibert_scivocab_uncased',
         output_hidden_states=True
     )
-    self.model.eval()
+    
+    model.eval()
 
     def __init__(self, pickle_path):
         with open(pickle_path, 'rb') as f:
@@ -118,3 +117,5 @@ class Entity_Linker:
     def doc_entity_linking(self, document_entities):
 
         emb_idx = self.vector_similarity(document_entities)
+
+    
