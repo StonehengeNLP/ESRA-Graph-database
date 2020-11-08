@@ -1,6 +1,7 @@
 from . import settings
 from . import models
 from neomodel import config, Q, db
+from typing import List
 
 class GraphDatabase():
     
@@ -39,6 +40,13 @@ class GraphDatabase():
         query = 'MATCH (n) DETACH DELETE n'
         db.cypher_query(query)
 
+    def get_all_entities(self, entity_type:str) -> List[models.BaseEntity]:
+        entity_model = GraphDatabase.ENTITY_MODEL.get(
+            entity_type, 
+            models.BaseEntity
+        )
+        return entity_model.nodes.all()
+        
     def get_entity(self, entity_type, entity_name):
         entity_model = GraphDatabase.ENTITY_MODEL[entity_type]
         target_entity = entity_model.nodes.get(name=entity_name)

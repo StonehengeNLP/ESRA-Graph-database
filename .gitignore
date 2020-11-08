@@ -17,3 +17,6 @@ venv.bak/
 
 # Mac
 .DS_Store
+
+# tmp test run files
+tmp.py 
