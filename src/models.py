@@ -2,6 +2,7 @@ import neomodel
 
 class BaseEntity(neomodel.StructuredNode):
     name = neomodel.StringProperty(unique_index=True)
+    count = neomodel.IntegerProperty(default=1)
 
     #relation from Task to ...
     task_usedFor = neomodel.RelationshipTo('Task', 'Used-for')

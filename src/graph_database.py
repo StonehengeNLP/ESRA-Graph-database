@@ -1,5 +1,5 @@
-import settings
-import models
+from . import settings
+from . import models
 from neomodel import config, Q, db
 
 class GraphDatabase():
@@ -37,12 +37,12 @@ class GraphDatabase():
         db.cypher_query(query)
 
     def get_entity(self, entity_type, entity_name):
-        entity_model = GraphDatabase.ENTITY_TYPE_MAP[entity_type]
+        entity_model = GraphDatabase.ENTITY_MODEL[entity_type]
         target_entity = entity_model.nodes.get(name=entity_name)
         return target_entity
     
     def is_entity_exist(self, entity_type, entity_name):
-        entity_model = GraphDatabase.ENTITY_TYPE_MAP[entity_type]
+        entity_model = GraphDatabase.ENTITY_MODEL[entity_type]
         target_entity = entity_model.nodes.first_or_none(name=entity_name)
         if target_entity == None:
             return False
@@ -53,6 +53,7 @@ class GraphDatabase():
             target_entity = self.get_entity(entity_type, entity_name)
             target_entity.count += 1
         else:
+            entity_model = GraphDatabase.ENTITY_MODEL[entity_type]
             target_entity = entity_model(name=entity_name).save()
         return target_entity
     

@@ -1,2 +1,2 @@
 neomodel==4.0.1
-python-dotenv==0.15.0
+python-dotenv>=0.15.0
