@@ -64,8 +64,7 @@ class GraphDatabase():
         if self.is_entity_exist(entity_type, entity_name):
             target_entity = self.get_entity(entity_type, entity_name)
             target_entity.count += 1
-            _weight_diff = (confidence - target_entity.weight) / target_entity.count
-            target_entity.weight += _weight_diff
+            target_entity.weight += confidence
         else:
             entity_model = GraphDatabase.ENTITY_MODEL[entity_type]
             target_entity = entity_model(name=entity_name)
@@ -118,8 +117,7 @@ class GraphDatabase():
         if self.is_relation_exist(relation_type, head_entity, tail_entity):
             relationship = relation.relationship(tail_entity)
             relationship.count += 1
-            _weight_diff = (confidence - relationship.weight) / relationship.count
-            relationship.weight += _weight_diff
+            relationship.weight += confidence
         else:
             relationship = relation.connect(tail_entity)
             relationship.weight = confidence
