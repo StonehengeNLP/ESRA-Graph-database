@@ -36,6 +36,9 @@ class AuthorOf(BaseRelation):
 class AffiliateWith(BaseRelation):
     pass
 
+class Cite(BaseRelation):
+    pass
+
 class BaseEntity(neomodel.StructuredNode):
     name = neomodel.StringProperty(unique_index=True)
     count = neomodel.IntegerProperty(default=1)
@@ -53,6 +56,7 @@ class BaseEntity(neomodel.StructuredNode):
     appear_in = neomodel.RelationshipTo(neomodel.StructuredNode, 'appear_in', model=AppearIn)
     author_of = neomodel.RelationshipTo(neomodel.StructuredNode, 'author_of', model=AuthorOf)
     affiliate_with = neomodel.RelationshipTo(neomodel.StructuredNode, 'affiliate_with', model=AffiliateWith)
+    cite = neomodel.RelationshipTo(neomodel.StructuredNode, 'cite', model=Cite)
     
 class Generic(BaseEntity):
     pass
@@ -76,7 +80,8 @@ class Abbreviation(BaseEntity):
     pass
 
 class Paper(BaseEntity):
-    pass
+    mag_id = neomodel.IntegerProperty()
+    cc = neomodel.IntegerProperty()
 
 class Author(BaseEntity):
     pass

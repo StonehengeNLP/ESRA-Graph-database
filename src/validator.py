@@ -86,7 +86,7 @@ ER = {'BaseEntity': {},
           'OtherScientificTerm': [],
           'Task': [],
           'Abbreviation': [],
-          'Paper': [],
+          'Paper': ['cite'],
           'Author': [],
           'Affiliation': []},
       'Author': {
@@ -121,4 +121,4 @@ def validate_relation(relation_type:models.BaseEntity, head_entity:models.BaseEn
     if tail not in ER[head]:
         raise TypeError(f'Tail entity type is not valid: {tail}')
     if relation_type not in ER[head][tail]:
-        raise TypeError(f'Relation type is not valid: {head}-{relation_type}-{tail}')
+        raise TypeError(f'Relation is not valid: {head}-{relation_type}-{tail}')
