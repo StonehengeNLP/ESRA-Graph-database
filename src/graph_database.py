@@ -37,21 +37,21 @@ class GraphDatabase():
         )
         return entity_model.nodes.all()
         
-    def get_entity(self, entity_type, entity_name):
+    def get_entity(self, entity_type, **kwargs):
         entity_model = GraphDatabase.ENTITY_MODEL[entity_type]
-        target_entity = entity_model.nodes.get(name=entity_name)
+        target_entity = entity_model.nodes.get(**kwargs)
         return target_entity
     
-    def is_entity_exist(self, entity_type, entity_name):
+    def is_entity_exist(self, entity_type, **kwargs):
         entity_model = GraphDatabase.ENTITY_MODEL[entity_type]
-        target_entity = entity_model.nodes.first_or_none(name=entity_name)
+        target_entity = entity_model.nodes.first_or_none(**kwargs)
         if target_entity == None:
             return False
         return True
     
     def add_entity(self, entity_type, entity_name, confidence=1, **kwargs):
-        if self.is_entity_exist(entity_type, entity_name):
-            target_entity = self.get_entity(entity_type, entity_name)
+        if self.is_entity_exist(entity_type, name=entity_name):
+            target_entity = self.get_entity(entity_type, name=entity_name)
             target_entity.count += 1
             _weight_diff = (confidence - target_entity.weight) / target_entity.count
             target_entity.weight += _weight_diff

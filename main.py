@@ -32,8 +32,6 @@ for doc in data[:10]:
             affiliation_entity = graph_database.add_entity('Affiliation', author['AfN'])
             graph_database.add_relation('Affiliate-with', author_entity, affiliation_entity)
     
-    # TODO: cite to paper entities in meta[id][RId]
-    
     # information adding section
     entity_cache = []
     for entity_type, entity_name, confidence, *args in entities:
@@ -48,3 +46,12 @@ for doc in data[:10]:
                                         confidence)
         except Exception as e:
             print(e)
+
+# TODO: cite to paper entities in meta[id][RId]
+for id in meta:
+    if graph_database.is_entity_exist('Paper', mag_id=id):
+        paper = graph_database.get_entity('Paper', mag_id=id)
+        for rid in meta[id]['RId']:       
+            if graph_database.is_entity_exist('Paper', mag_id=rid):
+                r_paper = graph_database.get_entity('Paper', mag_id=rid)
+                graph_database.add_relation('cite', paper, r_paper)
