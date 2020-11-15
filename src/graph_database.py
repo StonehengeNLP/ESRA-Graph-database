@@ -1,5 +1,6 @@
 from . import settings
 from . import models
+from . import validator
 from neomodel import config, Q, db
 from typing import List
 
@@ -72,6 +73,7 @@ class GraphDatabase():
         assert isinstance(head_entity, models.BaseEntity)
         assert isinstance(tail_entity, models.BaseEntity)
         
+        relation_type = relation_type.lower().replace('-', '_')
         relation = self.get_relation(relation_type, head_entity)
         relationship = relation.relationship(tail_entity)
         if relationship == None:
@@ -82,12 +84,14 @@ class GraphDatabase():
         assert isinstance(head_entity, models.BaseEntity)
         assert isinstance(tail_entity, models.BaseEntity)
         
+        relation_type = relation_type.lower().replace('-', '_')
         relation = self.get_relation(relation_type, head_entity)
         if self.is_relation_exist(relation_type, head_entity, tail_entity):
             relationship = relation.relationship(tail_entity)
             relationship.count += 1
             relationship.weight += confidence
         else:
+            validator.validate_relation(relation_type, head_entity, tail_entity)
             relationship = relation.connect(tail_entity)
             relationship.weight = confidence
         relationship.__dict__.update(kwargs)

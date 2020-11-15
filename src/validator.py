@@ -1,3 +1,5 @@
+from . import models
+
 ER = {'BaseEntity': {},
       'Generic': {
           'Generic': ['compare', 'used_for', 'hyponym_of', 'conjunction', 'evaluate_for', 'part_of', 'feature_of'],
@@ -111,6 +113,12 @@ ER = {'BaseEntity': {},
           'Affiliation': []},
       }
 
-def validate(head_entity, tail_entity, relation):
-    # TODO
-    pass
+def validate_relation(relation_type:models.BaseEntity, head_entity:models.BaseEntity, tail_entity):
+    head = head_entity.__class__.__name__
+    tail = tail_entity.__class__.__name__
+    if head not in ER:
+        raise TypeError(f'Head entity type is not valid: {head}')
+    if tail not in ER[head]:
+        raise TypeError(f'Tail entity type is not valid: {tail}')
+    if relation_type not in ER[head][tail]:
+        raise TypeError(f'Relation type is not valid: {head}-{relation_type}-{tail}')
