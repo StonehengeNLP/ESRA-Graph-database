@@ -15,20 +15,8 @@ class GraphDatabase():
         'Abbreviation': models.Abbreviation,
         'Paper': models.Paper,
         'Author': models.Author,
-        'Category': models.Category,
+        'Affiliation': models.Affiliation,
         }
-    
-    # RELATION_MODEL = {
-    #     'Hyponym-of': models.HyponymOf,
-    #     'Feature-of': models.FeatureOf,
-    #     'Used-for': models.UsedFor,
-    #     'Part-of': models.PartOf,
-    #     'Refer-to': models.ReferTo,
-    #     'Compare': models.Compare,
-    #     'Evaluate-for': models.EvaluateFor,
-    #     'Is-a': models.IsA,
-    #     'Appear-in': models.AppearIn,
-    # }
 
     def __init__(self):
         username = settings.NEO4J_USERNAME
@@ -76,28 +64,8 @@ class GraphDatabase():
     
     def get_relation(self, relation_type, head_entity):
         assert isinstance(head_entity, models.BaseEntity)
-        if relation_type == 'Hyponym-of':
-            relation = head_entity.hyponym_of
-        elif relation_type == 'Feature-of':
-            relation = head_entity.feature_of
-        elif relation_type == 'Used-for':
-            relation = head_entity.used_for
-        elif relation_type == 'Part-of':
-            relation = head_entity.part_of
-        elif relation_type == 'Refer-to':
-            relation = head_entity.refer_to
-        elif relation_type == 'Compare':
-            relation = head_entity.compare
-        elif relation_type == 'Evaluate-for':
-            relation = head_entity.evaluate_for
-        elif relation_type == 'Is-a':
-            relation = head_entity.is_a
-        elif relation_type == 'Appear-in':
-            relation = head_entity.appear_in
-        elif relation_type == 'Author-of':
-            relation = head_entity.author_of
-        elif relation_type == 'In-category':
-            relation = head_entity.in_category
+        relation_type = relation_type.lower().replace('-', '_')
+        relation = head_entity.__dict__[relation_type]
         return relation
     
     def is_relation_exist(self, relation_type, head_entity, tail_entity):

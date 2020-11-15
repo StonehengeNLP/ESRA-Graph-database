@@ -1,35 +1,33 @@
+import json
 import pickle
-import pandas as pd
+from datetime import datetime
 from src.graph_database import GraphDatabase
 
-with open('data/pickle/arxiv_cscl_200_cleaned.pickle', 'rb') as f:
+with open('data/pickle/data_5000_cleaned.pickle', 'rb') as f:
     data = pickle.load(f)
-
-df = pd.read_csv('data/csv/arxiv_cscl_200.csv')
-df['created'] = df.versions.apply(lambda x: eval(x)[-1]['created'])
-df['created'] = pd.to_datetime(df.created)
-df['authors_parsed'] = df.authors_parsed.apply(lambda x: [' '.join(author).strip() for author in eval(x)])
-df['categories'] = df.categories.str.split()
-df = df[['id', 'title', 'authors_parsed', 'categories', 'created']]
-meta_data = df.set_index('id').transpose().to_dict()
-# print(meta_data)
+    
+with open('data/data_5000_mag.json') as f:
+    meta = json.load(f)
+    meta = {d['Id']:d for d in meta}
 
 graph_database = GraphDatabase()
 graph_database.clear_all()
 
-for doc in data:
+for doc in data[:1]:
     entities = doc['entities']
     relations = doc['relations']
     id = doc['id']
+    print(meta[id])
     
     # metadata adding section
-    paper_entity = graph_database.add_entity('Paper', meta_data[id]['title'], created=meta_data[id]['created'])
-    for author in meta_data[id]['authors_parsed']:
-        author_entity = graph_database.add_entity('Author', author)
+    creation_date = datetime.strptime(meta[id]['D'], '%Y-%m-%d')
+    paper_entity = graph_database.add_entity('Paper', meta[id]['DN'], created=creation_date)
+    for author in meta[id]['AA']:
+        author_entity = graph_database.add_entity('Author', author['DAuN'])
         graph_database.add_relation('Author-of', author_entity, paper_entity)
-    for category in meta_data[id]['categories']:
-        category_entity = graph_database.add_entity('Category', category)
-        graph_database.add_relation('In-category', paper_entity, category_entity)
+        if 'AfN' in author:
+            affiliation_entity = graph_database.add_entity('Affiliation', author['AfN'])
+            graph_database.add_relation('Affiliate-with', author_entity, affiliation_entity)
     
     # information adding section
     entity_cache = []
