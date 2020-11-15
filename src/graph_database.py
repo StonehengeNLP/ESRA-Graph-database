@@ -5,19 +5,6 @@ from neomodel import config, Q, db
 from typing import List
 
 class GraphDatabase():
-    
-    ENTITY_MODEL = {
-        'Task': models.Task,
-        'Method': models.Method,
-        'Material': models.Material,
-        'OtherScientificTerm': models.OtherScientificTerm,
-        'Metric': models.Metric,
-        'Generic': models.Generic,
-        'Abbreviation': models.Abbreviation,
-        'Paper': models.Paper,
-        'Author': models.Author,
-        'Affiliation': models.Affiliation,
-        }
 
     def __init__(self):
         username = settings.NEO4J_USERNAME
@@ -30,20 +17,21 @@ class GraphDatabase():
         query = 'MATCH (n) DETACH DELETE n'
         db.cypher_query(query)
 
-    def get_all_entities(self, entity_type:str) -> List[models.BaseEntity]:
-        entity_model = GraphDatabase.ENTITY_MODEL.get(
-            entity_type, 
-            models.BaseEntity
-        )
-        return entity_model.nodes.all()
+    @classmethod
+    def get_entity_model(cls, entity_type):
+        return models.__dict__[entity_type]
         
+    def get_all_entities(self, entity_type:str) -> List[models.BaseEntity]:
+        entity_model = GraphDatabase.get_entity_model(entity_type)
+        return entity_model.nodes.all()
+    
     def get_entity(self, entity_type, **kwargs):
-        entity_model = GraphDatabase.ENTITY_MODEL[entity_type]
+        entity_model = GraphDatabase.get_entity_model(entity_type)
         target_entity = entity_model.nodes.get(**kwargs)
         return target_entity
     
     def is_entity_exist(self, entity_type, **kwargs):
-        entity_model = GraphDatabase.ENTITY_MODEL[entity_type]
+        entity_model = GraphDatabase.get_entity_model(entity_type)
         target_entity = entity_model.nodes.first_or_none(**kwargs)
         if target_entity == None:
             return False
@@ -56,7 +44,7 @@ class GraphDatabase():
             _weight_diff = (confidence - target_entity.weight) / target_entity.count
             target_entity.weight += _weight_diff
         else:
-            entity_model = GraphDatabase.ENTITY_MODEL[entity_type]
+            entity_model = GraphDatabase.get_entity_model(entity_type)
             target_entity = entity_model(name=entity_name)
             target_entity.weight = confidence
         target_entity.__dict__.update(kwargs)
@@ -91,9 +79,12 @@ class GraphDatabase():
             relationship.count += 1
             relationship.weight += confidence
         else:
-            validator.validate_relation(relation_type, head_entity, tail_entity)
             relationship = relation.connect(tail_entity)
             relationship.weight = confidence
+        try:
+            validator.validate_relation(relation_type, head_entity, tail_entity)
+        except:
+            relationship.flag_violation = True
         relationship.__dict__.update(kwargs)
         relationship.save()
         return relationship

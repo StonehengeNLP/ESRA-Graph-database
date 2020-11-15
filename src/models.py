@@ -5,7 +5,8 @@ class BaseRelation(neomodel.StructuredRel):
     count = neomodel.IntegerProperty(default=1)
     weight = neomodel.FloatProperty(default=0)
     create_at = neomodel.DateTimeFormatProperty(format="%Y-%m-%d %H:%M:%S", default_now=True)
-
+    flag_violation = neomodel.BooleanProperty(default=False)
+    
 class HyponymOf(BaseRelation):
     pass
 

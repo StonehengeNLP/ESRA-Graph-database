@@ -13,11 +13,10 @@ with open('data/data_5000_mag.json') as f:
 graph_database = GraphDatabase()
 graph_database.clear_all()
 
-for doc in data[:10]:
+for doc in data:
     entities = doc['entities']
     relations = doc['relations']
     id = doc['id']
-    print(meta[id])
     
     # metadata adding section
     creation_date = datetime.strptime(meta[id]['D'], '%Y-%m-%d')
@@ -39,19 +38,19 @@ for doc in data[:10]:
         graph_database.add_relation('Appear-in', entity, paper_entity, confidence)
         entity_cache += [entity]
     for relation_type, head, tail, confidence, *args in relations:
-        try:
-            graph_database.add_relation(relation_type, 
-                                        entity_cache[head], 
-                                        entity_cache[tail],
-                                        confidence)
-        except Exception as e:
-            print(e)
+        graph_database.add_relation(relation_type, 
+                                    entity_cache[head], 
+                                    entity_cache[tail],
+                                    confidence)
 
-# TODO: cite to paper entities in meta[id][RId]
+# add citation relation at the end
 for id in meta:
     if graph_database.is_entity_exist('Paper', mag_id=id):
         paper = graph_database.get_entity('Paper', mag_id=id)
-        for rid in meta[id]['RId']:       
-            if graph_database.is_entity_exist('Paper', mag_id=rid):
-                r_paper = graph_database.get_entity('Paper', mag_id=rid)
-                graph_database.add_relation('cite', paper, r_paper)
+        if 'RId' not in meta[id]:
+            print(meta[id])
+        else:
+            for rid in meta[id]['RId']:       
+                if graph_database.is_entity_exist('Paper', mag_id=rid):
+                    r_paper = graph_database.get_entity('Paper', mag_id=rid)
+                    graph_database.add_relation('cite', paper, r_paper)
