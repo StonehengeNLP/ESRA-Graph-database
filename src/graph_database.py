@@ -1,8 +1,10 @@
 from . import settings
 from . import models
 from . import validator
-from neomodel import config, db
+from neomodel import config, db, Q
 from typing import List
+from fuzzywuzzy import fuzz
+
 
 class GraphDatabase():
 
@@ -90,8 +92,19 @@ class GraphDatabase():
         relationship.save()
         return relationship
     
-    def autocomplete(self, text, n=10):
+    def text_autocomplete(self, text, n=10):
         base_entity = GraphDatabase.get_entity_model('BaseEntity')
-        nodes = base_entity.nodes.filter(name__startswith=text)
-        suggested_list = {node.name for node in nodes[:100]}
-        return sorted(list(suggested_list), key=len)[:n]
+        nodes = base_entity.nodes.filter(name__istartswith=text.lower())
+        suggested_list = list({node.name.lower() for node in nodes[:100]})
+        return sorted(suggested_list, key=len)[:n]
+    
+    def text_best_match(self, text, limit=1000):
+        text = text.lower()
+        base_entity = GraphDatabase.get_entity_model('BaseEntity')
+        # nodes = base_entity.nodes.filter(name__iregex=r'[a|b][^/]+')
+        # suggested_list = list({node.name.lower() for node in nodes[:]})
+        nodes = base_entity.nodes.filter(name__istartswith=text[:1])
+        suggested_list = list({node.name.lower() for node in nodes[:limit]})
+        score = lambda x: fuzz.ratio(text, x.lower())
+        return sorted(suggested_list, key=score)[-1:]
+        
