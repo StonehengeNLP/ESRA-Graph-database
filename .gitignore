@@ -20,3 +20,5 @@ venv.bak/
 
 # tmp test run files
 tmp.py 
+tmp.txt
+corpus.txt
