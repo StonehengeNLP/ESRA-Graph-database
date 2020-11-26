@@ -1,7 +1,7 @@
 from . import settings
 from . import models
 from . import validator
-from neomodel import config, Q, db
+from neomodel import config, db
 from typing import List
 
 class GraphDatabase():
@@ -89,3 +89,9 @@ class GraphDatabase():
         relationship.__dict__.update(kwargs)
         relationship.save()
         return relationship
+    
+    def autocomplete(self, text, n=10):
+        base_entity = GraphDatabase.get_entity_model('BaseEntity')
+        nodes = base_entity.nodes.filter(name__startswith=text)
+        suggested_list = {node.name for node in nodes[:n*2]}
+        return sorted(list(suggested_list), key=len)[:n]
