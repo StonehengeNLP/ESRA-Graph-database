@@ -93,5 +93,5 @@ class GraphDatabase():
     def autocomplete(self, text, n=10):
         base_entity = GraphDatabase.get_entity_model('BaseEntity')
         nodes = base_entity.nodes.filter(name__startswith=text)
-        suggested_list = {node.name for node in nodes[:n*2]}
+        suggested_list = {node.name for node in nodes[:100]}
         return sorted(list(suggested_list), key=len)[:n]
