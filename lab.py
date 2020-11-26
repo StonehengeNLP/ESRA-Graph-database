@@ -33,8 +33,10 @@ class EsraShell(cmd.Cmd):
     
     def complete_search(self, text, line, start_index, end_index):
         if text:
-            x = self.graph_database.autocomplete(text)
-            return x
+            text = text.replace('_', ' ')
+            out = self.graph_database.autocomplete(text)
+            out = [i.replace(' ', '_') for i in out]
+            return out
         return []     
 
 if __name__ == '__main__':
