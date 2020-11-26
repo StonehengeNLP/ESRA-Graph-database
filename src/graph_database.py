@@ -83,7 +83,8 @@ class GraphDatabase():
             relationship.weight = confidence
         try:
             validator.validate_relation(relation_type, head_entity, tail_entity)
-        except:
+        except Exception as e:
+            print(e)
             relationship.flag_violation = True
         relationship.__dict__.update(kwargs)
         relationship.save()
