@@ -30,7 +30,7 @@ for entity in entities_all_name:
     for i,name in enumerate(entity):
         if i == 0:
             main_name = name
-        if ' ' in name:
+        if ' ' in keyword:
             scores.append((fuzz.token_sort_ratio(keyword.lower(),name.lower()),name,main_name))
         else:
             scores.append((fuzz.ratio(keyword.lower(),name.lower()),name,main_name))
@@ -39,9 +39,9 @@ result = sorted(scores,reverse=True)
 
 #to get the top name and it main name
 top_name,top_main_name = (result[0][1],result[0][2])
-print(top_name,top_main_name)
+#print(top_name,top_main_name)
 
-# print(sorted(scores,reverse=True)[:10])
+print(sorted(scores,reverse=True)[:10])
 
 
 
