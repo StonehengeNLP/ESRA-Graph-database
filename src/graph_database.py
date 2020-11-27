@@ -114,36 +114,23 @@ class GraphDatabase():
             return []
         return [best]
     
-    def _score(self, path:list) -> int:
-        """revise this function"""
-        assert 'Paper' in path[-1].labels
-        score = 1
-        for i, x in enumerate(path):
-            if i % 2 == 0:
-                x = models.BaseEntity.inflate(x)
-                score *= x.weight
-            else:
-                x = models.BaseRelation.inflate(x)
-                score *= x.weight / x.count
-        return score
-    
     # TODO: prevent injection
-    def search(self, key, hops=3):
-        for h in range(1, 1 + hops):
-            mat = ''.join([f'-[r{i+1}]-(n{i+1})' for i in range(h)])
-            ret = ''.join([f', r{i+1}, n{i+1}' for i in range(h)])
-            # not_aff = ' '.join([f'AND NOT n{i+1}:Affiliation' for i in range(h)])
-            query = f"""MATCH (n:BaseEntity){mat} 
-                        WHERE n.name =~ "(?i){key}"
-                        AND n{h}:Paper 
-                        RETURN DISTINCT n{ret};"""
-                        # {not_aff}
-            results = db.cypher_query(query)[0]
-            print(len(results))
-            x = sorted(results, key=self._score)[-10:]
-            if len(x) > 0:
-                for i in x:
-                    en = models.BaseEntity.inflate(i[-1])
-                    print(self._score(i), en.name)
-            print('*'*100)
-        return results
+    def search(self, key, n=10):
+        query = """ MATCH (n {name: '{key}'})
+                    CALL gds.pageRank.stream('NAME', {
+                    maxIterations: 200,
+                    dampingFactor: 0.85,
+                    relationshipWeightProperty: 'weight',
+                    sourceNodes: [n]
+                    })
+                    YIELD nodeId, score
+                    WHERE gds.util.asNode(nodeId):Paper
+                    RETURN gds.util.asNode(nodeId).name AS name, 
+                        gds.util.asNode(nodeId).cc AS citation,
+                        gds.util.asNode(nodeId).created AS created,
+                        score
+                    ORDER BY score DESC, name ASC;
+                """.format(key=key)
+        results = db.cypher_query(query)[0]
+        print(len(results))
+        return results[:n]

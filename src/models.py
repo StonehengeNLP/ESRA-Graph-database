@@ -81,8 +81,9 @@ class Abbreviation(BaseEntity):
     pass
 
 class Paper(BaseEntity):
-    mag_id = neomodel.IntegerProperty()
     cc = neomodel.IntegerProperty()
+    mag_id = neomodel.IntegerProperty()
+    created = neomodel.DateTimeFormatProperty(format="%Y-%m-%d")
 
 class Author(BaseEntity):
     pass
