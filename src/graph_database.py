@@ -1,9 +1,9 @@
 from . import settings
 from . import models
 from . import validator
-from neomodel import config, db, Q
 from typing import List
 from fuzzywuzzy import fuzz
+from neomodel import config, db, Q, match
 
 
 class GraphDatabase():
@@ -16,8 +16,8 @@ class GraphDatabase():
         config.DATABASE_URL = f'bolt://{username}:{password}@{host}:{port}'
 
     def clear_all(self):
-        query = 'MATCH (n) DETACH DELETE n'
-        db.cypher_query(query)
+        QUERY = 'MATCH (n) DETACH DELETE n'
+        db.cypher_query(QUERY)
 
     @classmethod
     def get_entity_model(cls, entity_type):
@@ -93,13 +93,14 @@ class GraphDatabase():
         return relationship
     
     def text_autocomplete(self, text, n=10):
+        """suggest top 10 similar keywords based on the given text"""
         base_entity = GraphDatabase.get_entity_model('BaseEntity')
         nodes = base_entity.nodes.filter(name__istartswith=text.lower())
         suggested_list = list({node.name.lower() for node in nodes[:100]})
         return sorted(suggested_list, key=len)[:n]
     
-    def text_best_match(self, text, limit=1000):
-        """univeral correction"""
+    def text_correction(self, text, limit=1000):
+        """correct the text to be matched to a node"""
         text = text.lower()
         base_entity = GraphDatabase.get_entity_model('BaseEntity')
         # match the first or second character 
@@ -112,4 +113,37 @@ class GraphDatabase():
         if score(best) < 60:
             return []
         return [best]
-        
+    
+    def _score(self, path:list) -> int:
+        """revise this function"""
+        assert 'Paper' in path[-1].labels
+        score = 1
+        for i, x in enumerate(path):
+            if i % 2 == 0:
+                x = models.BaseEntity.inflate(x)
+                score *= x.weight
+            else:
+                x = models.BaseRelation.inflate(x)
+                score *= x.weight / x.count
+        return score
+    
+    # TODO: prevent injection
+    def search(self, key, hops=3):
+        for h in range(1, 1 + hops):
+            mat = ''.join([f'-[r{i+1}]-(n{i+1})' for i in range(h)])
+            ret = ''.join([f', r{i+1}, n{i+1}' for i in range(h)])
+            # not_aff = ' '.join([f'AND NOT n{i+1}:Affiliation' for i in range(h)])
+            query = f"""MATCH (n:BaseEntity){mat} 
+                        WHERE n.name =~ "(?i){key}"
+                        AND n{h}:Paper 
+                        RETURN DISTINCT n{ret};"""
+                        # {not_aff}
+            results = db.cypher_query(query)[0]
+            print(len(results))
+            x = sorted(results, key=self._score)[-10:]
+            if len(x) > 0:
+                for i in x:
+                    en = models.BaseEntity.inflate(i[-1])
+                    print(self._score(i), en.name)
+            print('*'*100)
+        return results

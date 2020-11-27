@@ -20,6 +20,9 @@ class EsraShell(cmd.Cmd):
         super().__init__()
         self.graph_database = GraphDatabase()
         
+    def emptyline(self):
+         pass
+        
     def do_clear(self, line):
         'Clear screen'
         system('clear')
@@ -29,14 +32,16 @@ class EsraShell(cmd.Cmd):
         
     def do_search(self, line):
         'Search scientific papers by using keyword(s)'
-        pass
-    
+        line = line.replace('_', ' ')
+        results = self.graph_database.search(line)
+        # print(results[:2])
+            
     def complete_search(self, text, line, start_index, end_index):
         if text:
             text = text.replace('_', ' ')
             out = self.graph_database.text_autocomplete(text)
             if len(out) == 0:
-                out = self.graph_database.text_best_match(text)
+                out = self.graph_database.text_correction(text)
             out = [i.replace(' ', '_') for i in out]
             return out
         return []     
@@ -44,5 +49,3 @@ class EsraShell(cmd.Cmd):
 if __name__ == '__main__':
     esra_shell = EsraShell()
     esra_shell.cmdloop()
-    # x = GraphDatabase().text_best_match('machone')
-    # print(x)
