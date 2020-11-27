@@ -104,12 +104,12 @@ class GraphDatabase():
         base_entity = GraphDatabase.get_entity_model('BaseEntity')
         # match the first or second character 
         nodes = base_entity.nodes.filter(
-            Q(name__regex=rf'^{text[0]}.*') | Q(name__regex=rf'^.{text[1]}.*'))
+            Q(name__istartswith=text[0]) | Q(name__regex=rf'^.{text[1]}.*'))
         suggested_list = list({node.name.lower() for node in nodes[:limit]})
         score = lambda x: fuzz.ratio(text, x.lower())
-        xx = max(suggested_list, key=score)
+        best = max(suggested_list, key=score)
         # cut-off threshold 
-        if score(xx) < 60:
+        if score(best) < 60:
             return []
-        return [xx]
+        return [best]
         
