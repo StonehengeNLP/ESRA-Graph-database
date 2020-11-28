@@ -33,6 +33,11 @@ class GraphDatabase():
                 gds.util.asNode(nodeId).name AS name
             ORDER BY score DESC, name ASC;
         """
+    
+    CYPHER_DELETE = \
+        """
+            CALL gds.graph.drop('{key}');
+        """
                 # gds.util.asNode(nodeId).cc AS citation,
                 # gds.util.asNode(nodeId).created AS created
     
@@ -153,4 +158,6 @@ class GraphDatabase():
         # print(_query)
         results = db.cypher_query(_query)[0]
         print(len(results))
+        _query = self.CYPHER_DELETE.format(key=key)
+        db.cypher_query(_query)
         return results[:n]
