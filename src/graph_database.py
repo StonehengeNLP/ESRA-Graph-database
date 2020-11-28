@@ -8,9 +8,9 @@ from neomodel import config, db, Q, match
 
 class GraphDatabase():
 
-    CYPHER_DELETE_ALL = "MATCH (n) DETACH DELETE n:"
-    CYPHER_CHECK = "CALL gds.graph.exists('{key}')"
-    CYPHER_CREATE = \
+    CYPHER_DELETE_ALL = "MATCH (n) DETACH DELETE n"
+    CYPHER_GRAPH_CHECK = "CALL gds.graph.exists('{key}')"
+    CYPHER_GRAPH_CREATE = \
         """ CALL gds.graph.create.cypher(
                 '{key}',
                 'MATCH (n)-[e *0..2]-(m) WHERE m.name =~ "(?i){key}" RETURN distinct(id(n)) AS id',
@@ -18,6 +18,7 @@ class GraphDatabase():
                 {{validateRelationships: false}}
             )
         """
+    CYPHER_GRAPH_DELETE = "CALL gds.graph.drop('{key}')"
     CYPHER_PAGE_RANK = \
         """ MATCH (n)
             WHERE n.name =~ "(?i){key}"
@@ -32,11 +33,6 @@ class GraphDatabase():
             RETURN score,
                 gds.util.asNode(nodeId).name AS name
             ORDER BY score DESC, name ASC;
-        """
-    
-    CYPHER_DELETE = \
-        """
-            CALL gds.graph.drop('{key}');
         """
                 # gds.util.asNode(nodeId).cc AS citation,
                 # gds.util.asNode(nodeId).created AS created
@@ -146,18 +142,29 @@ class GraphDatabase():
             return []
         return [best]
     
+    def _is_cypher_graph_exist(self, key):
+        query = self.CYPHER_GRAPH_CHECK.format(key=key)
+        is_exist = db.cypher_query(query)[0][0][1]
+        return is_exist
+    
+    def _create_cypher_graph(self, key):
+        query = self.CYPHER_GRAPH_CREATE.format(key=key)
+        db.cypher_query(query)
+    
+    def _delete_cypher_graph(self, key):
+        query = self.CYPHER_GRAPH_DELETE.format(key=key)
+        db.cypher_query(query)
+    
+    def _pagerank(self, key):
+        query = self.CYPHER_PAGE_RANK.format(key=key)
+        results = db.cypher_query(query)[0]
+        return results
+    
     # TODO: prevent injection
     def search(self, key, n=10):
-        _query = self.CYPHER_CHECK.format(key=key)
-        is_exist = db.cypher_query(_query)[0][0][1]
-        if not is_exist:
-            _query = self.CYPHER_CREATE.format(key=key)
-            # print(_query)
-            db.cypher_query(_query)
-        _query = self.CYPHER_PAGE_RANK.format(key=key)
-        # print(_query)
-        results = db.cypher_query(_query)[0]
+        if not self._is_cypher_graph_exist(key):
+            self._create_cypher_graph(key)
+        results = self._pagerank(key)
+        self._delete_cypher_graph(key)
         print(len(results))
-        _query = self.CYPHER_DELETE.format(key=key)
-        db.cypher_query(_query)
         return results[:n]
