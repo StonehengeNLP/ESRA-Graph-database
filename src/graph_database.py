@@ -13,13 +13,14 @@ class GraphDatabase():
     CYPHER_CREATE = \
         """ CALL gds.graph.create.cypher(
                 '{key}',
-                'MATCH (n)-[e *0..2]-(m {{name:"{key}"}}) RETURN distinct(id(n)) AS id',
+                'MATCH (n)-[e *0..2]-(m) WHERE m.name =~ "(?i){key}" RETURN distinct(id(n)) AS id',
                 'MATCH (n)-[e]-(m) RETURN id(n) AS source, e.weight AS weight, id(m) AS target',
                 {{validateRelationships: false}}
             )
         """
     CYPHER_PAGE_RANK = \
-        """ MATCH (n {{name: '{key}'}})
+        """ MATCH (n)
+            WHERE n.name =~ "(?i){key}"
             CALL gds.pageRank.stream('{key}', {{
                 maxIterations: 20,
                 dampingFactor: 0.85,
