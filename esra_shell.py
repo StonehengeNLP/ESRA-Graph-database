@@ -34,7 +34,8 @@ class EsraShell(cmd.Cmd):
         'Search scientific papers by using keyword(s)'
         line = line.replace('_', ' ')
         results = self.graph_database.search(line)
-        # print(results[:2])
+        for i in results[:10]:
+            print(*i)
             
     def complete_search(self, text, line, start_index, end_index):
         if text:

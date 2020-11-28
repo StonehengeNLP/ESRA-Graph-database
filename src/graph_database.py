@@ -8,6 +8,33 @@ from neomodel import config, db, Q, match
 
 class GraphDatabase():
 
+    CYPHER_DELETE_ALL = "MATCH (n) DETACH DELETE n:"
+    CYPHER_CHECK = "CALL gds.graph.exists('{key}')"
+    CYPHER_CREATE = \
+        """ CALL gds.graph.create.cypher(
+                '{key}',
+                'MATCH (n)-[e *0..2]-(m {{name:"{key}"}}) RETURN distinct(id(n)) AS id',
+                'MATCH (n)-[e]-(m) RETURN id(n) AS source, e.weight AS weight, id(m) AS target',
+                {{validateRelationships: false}}
+            )
+        """
+    CYPHER_PAGE_RANK = \
+        """ MATCH (n {{name: '{key}'}})
+            CALL gds.pageRank.stream('{key}', {{
+                maxIterations: 20,
+                dampingFactor: 0.85,
+                relationshipWeightProperty: 'weight',
+                sourceNodes: [n]
+            }})
+            YIELD nodeId, score
+            WHERE gds.util.asNode(nodeId):Paper
+            RETURN score,
+                gds.util.asNode(nodeId).name AS name
+            ORDER BY score DESC, name ASC;
+        """
+                # gds.util.asNode(nodeId).cc AS citation,
+                # gds.util.asNode(nodeId).created AS created
+    
     def __init__(self):
         username = settings.NEO4J_USERNAME
         password = settings.NEO4J_PASSWORD
@@ -16,8 +43,7 @@ class GraphDatabase():
         config.DATABASE_URL = f'bolt://{username}:{password}@{host}:{port}'
 
     def clear_all(self):
-        QUERY = 'MATCH (n) DETACH DELETE n'
-        db.cypher_query(QUERY)
+        db.cypher_query(self.CYPHER_DELETE_ALL)
 
     @classmethod
     def get_entity_model(cls, entity_type):
@@ -116,21 +142,14 @@ class GraphDatabase():
     
     # TODO: prevent injection
     def search(self, key, n=10):
-        query = """ MATCH (n {name: '{key}'})
-                    CALL gds.pageRank.stream('NAME', {
-                    maxIterations: 200,
-                    dampingFactor: 0.85,
-                    relationshipWeightProperty: 'weight',
-                    sourceNodes: [n]
-                    })
-                    YIELD nodeId, score
-                    WHERE gds.util.asNode(nodeId):Paper
-                    RETURN gds.util.asNode(nodeId).name AS name, 
-                        gds.util.asNode(nodeId).cc AS citation,
-                        gds.util.asNode(nodeId).created AS created,
-                        score
-                    ORDER BY score DESC, name ASC;
-                """.format(key=key)
-        results = db.cypher_query(query)[0]
+        _query = self.CYPHER_CHECK.format(key=key)
+        is_exist = db.cypher_query(_query)[0][0][1]
+        if not is_exist:
+            _query = self.CYPHER_CREATE.format(key=key)
+            # print(_query)
+            db.cypher_query(_query)
+        _query = self.CYPHER_PAGE_RANK.format(key=key)
+        # print(_query)
+        results = db.cypher_query(_query)[0]
         print(len(results))
         return results[:n]
