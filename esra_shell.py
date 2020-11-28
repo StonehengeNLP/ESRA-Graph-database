@@ -3,17 +3,24 @@ from os import system
 from src.graph_database import GraphDatabase
 
 
-INTRO = """
- _____ ____  ____      _      ____  _          _ _           _
-| ____/ ___||  _ \    / \    / ___|| |__   ___| | | __   __ / |
-|  _| \___ \| |_) |  / _ \   \___ \| '_ \ / _ \ | | \ \ / / | |
-| |___ ___) |  _ <  / ___ \   ___) | | | |  __/ | |  \ V /  | |
-|_____|____/|_| \_\/_/   \_\ |____/|_| |_|\___|_|_|   \_/   |_|
+INTRO = \
+"""
+                 _____ ____  ____      _     
+                | ____/ ___||  _ \    / \    
+                |  _| \___ \| |_) |  / _ \   
+                | |___ ___) |  _ <  / ___ \  
+                |_____|____/|_| \_\/_/   \_\ 
+  ____                 _       ____                      _
+ / ___|_ __ __ _ _ __ | |__   / ___|  ___  __ _ _ __ ___| |__
+| |  _| '__/ _` | '_ \| '_ \  \___ \ / _ \/ _` | '__/ __| '_ \ 
+| |_| | | | (_| | |_) | | | |  ___) |  __/ (_| | | | (__| | | |
+ \____|_|  \__,_| .__/|_| |_| |____/ \___|\__,_|_|  \___|_| |_|
+                |_|
 """
 
 class EsraShell(cmd.Cmd):
     
-    intro = INTRO + "\nWelcome to the graph_search command line.\n"
+    intro = INTRO + "\nWelcome to the ESRA's graph search command line.\n"
     prompt = '(esra) '
     
     def __init__(self):
@@ -34,7 +41,7 @@ class EsraShell(cmd.Cmd):
         'Search scientific papers by using keyword(s)'
         line = line.replace('_', ' ')
         results = self.graph_database.search(line)
-        for i in results[:10]:
+        for i in results:
             print(*i)
             
     def complete_search(self, text, line, start_index, end_index):
@@ -50,3 +57,7 @@ class EsraShell(cmd.Cmd):
 if __name__ == '__main__':
     esra_shell = EsraShell()
     esra_shell.cmdloop()
+    
+    # results = esra_shell.graph_database.search('resnet', 20)
+    # for i in results:
+    #     print(*i, sep=' \t')

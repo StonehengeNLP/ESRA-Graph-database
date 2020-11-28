@@ -13,7 +13,7 @@ class GraphDatabase():
     CYPHER_GRAPH_CREATE = \
         """ CALL gds.graph.create.cypher(
                 '{key}',
-                'MATCH (n)-[e *0..2]-(m) WHERE m.name =~ "(?i){key}" RETURN distinct(id(n)) AS id',
+                'MATCH (n)-[e *1..2]-(m) WHERE m.name =~ "(?i){key}" RETURN distinct(id(n)) AS id',
                 'MATCH (n)-[e]-(m) RETURN id(n) AS source, e.weight AS weight, id(m) AS target',
                 {{validateRelationships: false}}
             )
@@ -30,11 +30,12 @@ class GraphDatabase():
             }})
             YIELD nodeId, score
             WHERE gds.util.asNode(nodeId):Paper
-            RETURN score,
+            RETURN DISTINCT 
+                score,
+                gds.util.asNode(nodeId).cc AS citation,
                 gds.util.asNode(nodeId).name AS name
             ORDER BY score DESC, name ASC;
         """
-                # gds.util.asNode(nodeId).cc AS citation,
                 # gds.util.asNode(nodeId).created AS created
     
     def __init__(self):
