@@ -170,12 +170,9 @@ class GraphDatabase():
     
     # TODO: prevent injection
     def search(self, key, n=10):
-<<<<<<< HEAD
         print('Search key:', key)
-=======
         if not self._is_node_exist(key):
             return ["Entity does not exist"]
->>>>>>> 1b7ab74f20f4cc538435d68a524905b9b30a1fda
         if not self._is_cypher_graph_exist(key):
             self._create_cypher_graph(key)
         results = self._pagerank(key)
