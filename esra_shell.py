@@ -31,19 +31,20 @@ class EsraShell(cmd.Cmd):
          pass
         
     def do_clear(self, line):
-        'Clear screen'
+        """Clear screen"""
         system('clear')
     
     def do_exit(self,*args):
+        """Quit the program"""
         return True
         
     def do_search(self, line):
-        'Search scientific papers by using keyword(s)'
+        """Search scientific papers by using keyword(s)"""
         line = line.replace('_', ' ')
         results = self.graph_database.search(line)
         for i in results:
-            print(*i)
-            
+            print(*i, sep=' \t')
+                        
     def complete_search(self, text, line, start_index, end_index):
         if text:
             text = text.replace('_', ' ')
@@ -58,6 +59,6 @@ if __name__ == '__main__':
     esra_shell = EsraShell()
     esra_shell.cmdloop()
     
-    # results = esra_shell.graph_database.search('resnet', 20)
+    # results = GraphDatabase().search('attention', 20)
     # for i in results:
     #     print(*i, sep=' \t')

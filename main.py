@@ -48,7 +48,7 @@ for id in meta:
     if graph_database.is_entity_exist('Paper', mag_id=id):
         paper = graph_database.get_entity('Paper', mag_id=id)
         if 'RId' not in meta[id]:
-            print(meta[id])
+            print(id)
         else:
             for rid in meta[id]['RId']:       
                 if graph_database.is_entity_exist('Paper', mag_id=rid):

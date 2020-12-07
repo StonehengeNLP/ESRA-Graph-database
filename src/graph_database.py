@@ -163,6 +163,7 @@ class GraphDatabase():
     
     # TODO: prevent injection
     def search(self, key, n=10):
+        print('Search key:', key)
         if not self._is_cypher_graph_exist(key):
             self._create_cypher_graph(key)
         results = self._pagerank(key)
