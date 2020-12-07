@@ -36,6 +36,7 @@ class GraphDatabase():
                 gds.util.asNode(nodeId).name AS name
             ORDER BY score DESC, name ASC;
         """
+    CYPHER_CHECK_NODE_EXIST = "MATCH (n) WHERE n.name =~ '(?i){key}' RETURN count(n);"
                 # gds.util.asNode(nodeId).created AS created
     
     def __init__(self):
@@ -143,6 +144,12 @@ class GraphDatabase():
             return []
         return [best]
     
+    def _is_node_exist(self, key):
+        """ Check if node exist before searching """
+        query = self.CYPHER_CHECK_NODE_EXIST.format(key=key)
+        exist = (db.cypher_query(query)[0][0][0])
+        return True if exist else False
+
     def _is_cypher_graph_exist(self, key):
         query = self.CYPHER_GRAPH_CHECK.format(key=key)
         is_exist = db.cypher_query(query)[0][0][1]
@@ -163,7 +170,12 @@ class GraphDatabase():
     
     # TODO: prevent injection
     def search(self, key, n=10):
+<<<<<<< HEAD
         print('Search key:', key)
+=======
+        if not self._is_node_exist(key):
+            return ["Entity does not exist"]
+>>>>>>> 1b7ab74f20f4cc538435d68a524905b9b30a1fda
         if not self._is_cypher_graph_exist(key):
             self._create_cypher_graph(key)
         results = self._pagerank(key)
