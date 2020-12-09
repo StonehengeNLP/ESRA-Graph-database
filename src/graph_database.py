@@ -41,6 +41,17 @@ class GraphDatabase():
             ORDER BY score DESC
         """
     CYPHER_CHECK_NODE_EXIST = "MATCH (n) WHERE n.name =~ '(?i){key}' RETURN count(n);"
+    CYPHER_PATH_KEYS_PAPER = \
+        """
+            MATCH (n)
+            WHERE n.name =~ "(?i)({key})"
+            MATCH (m)
+            WHERE m.name = "{paper_title}"
+            MATCH path = allShortestPaths( (n)-[*..2]-(m) )
+            WITH *, relationships(path) AS r
+            WHERE type(r[-1]) = "appear_in"
+            RETURN  path
+        """
     
     def __init__(self):
         username = settings.NEO4J_USERNAME
@@ -158,3 +169,21 @@ class GraphDatabase():
         query = self.CYPHER_PAGE_RANK.format(graph_name=graph_name, key=key)
         results = db.cypher_query(query)[0]
         return results
+    
+    # TODO: use given keys and title
+    def find_path(self, keys: list, paper_title: str):
+        key = '|'.join(keys)
+        query = self.CYPHER_PATH_KEYS_PAPER.format(key=key, paper_title=paper_title)
+        path = db.cypher_query(query)[0]
+        for i in path:
+            # for j in i[0]._nodes:
+            #     print('Node:', j._properties['name'])
+            for j in i[0]._relationships:
+                relation_type = j.__class__.__name__
+                start_node = j._start_node._properties['name']
+                start_node_class = list(j._start_node.labels)
+                end_node = j._end_node._properties['name']
+                end_node_class = list(j._end_node.labels)
+                print([relation_type, (start_node, start_node_class), (end_node, end_node_class)])
+            print('*'*100)
+        return path

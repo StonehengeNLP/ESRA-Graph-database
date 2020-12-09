@@ -62,14 +62,15 @@ if __name__ == '__main__':
     esra_shell = EsraShell()
     # esra_shell.cmdloop()
 
-    search_text = 'bert natural language processing attention elmo'
+    search_text = 'bert'
     print('Search text:', search_text)
     keywords = gs.text_preprocessing(search_text)
     r = gs.search(keywords)
     for i in r:
         print(i)
     
-    # gdb = GraphDatabase()
+    gdb = GraphDatabase()
+    
     # for score, node in r[:3]:
     #     paper = gdb.get_entity('Paper', name=node['name'])
     #     name = paper.name
@@ -80,3 +81,5 @@ if __name__ == '__main__':
     #     print(name)
     #     print(abstract)
     #     print('*'*100)
+
+    gdb.find_path(['bert', 'attention'], 'MASS: Masked Sequence to Sequence Pre-training for Language Generation')
