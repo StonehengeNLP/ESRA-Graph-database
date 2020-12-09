@@ -53,13 +53,29 @@ class EsraShell(cmd.Cmd):
                 out = gs.text_correction(text)
             out = out[0].replace(' ', '_')
             return out
-        return []     
+        return []
+    
+from src.graph_database import GraphDatabase
+import re
 
 if __name__ == '__main__':
     esra_shell = EsraShell()
     # esra_shell.cmdloop()
 
-    search_text = 'attention'
-    r = gs.text_preprocessing(search_text)
+    search_text = 'bert attention natural language processing'
+    keywords = gs.text_preprocessing(search_text)
+    r = gs.search(keywords)
     for i in r:
         print(i)
+    
+    # gdb = GraphDatabase()
+    # for score, node in r[:3]:
+    #     paper = gdb.get_entity('Paper', name=node['name'])
+    #     name = paper.name
+    #     abstract = paper.abstract
+    #     for key in keywords:
+    #         name = re.sub(f'(?i){key}', f'**{key}**', name)
+    #         abstract = re.sub(f'(?i){key}', f'**{key}**', abstract)
+    #     print(name)
+    #     print(abstract)
+    #     print('*'*100)

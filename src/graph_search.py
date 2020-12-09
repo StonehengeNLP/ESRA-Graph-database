@@ -35,13 +35,25 @@ def text_correction(text, limit=1000, length_vary=0.2):
 def _generate_ngrams(s, n):
     s = s.lower()
     tokens = [token for token in s.split(" ") if token != ""]
-    # Use the zip function Kto help us generate n-grams
-    # Concatentate the tokens into ngrams and return
     ngrams = zip(*[tokens[i:] for i in range(n)])
-    return [" ".join(ngram) for ngram in ngrams]
+    ngrams = [" ".join(ngram) for ngram in ngrams]
+    return ngrams
+
+# NOTE: the keywords must be sorted as _generate_ngrams()
+def _drop_insignificant_words(keywords: list):
+    """remove unpopular words which are subtext and less number than another one"""
+    d = {}
+    for keyword in keywords:
+        c = gdb.count_entity(keyword)
+        for k in d:
+            if keyword in k and c < d[k]:
+                break
+        else:
+            d[keyword] = c
+    return list(d.keys())
 
 def text_preprocessing(search_text, threshold=90):
-    # correct and filter n-gram keywords by similarity threshold
+    """correct and filter n-gram keywords by similarity threshold"""
     n = len(search_text.split())
     new_keywords = []
     while n:
@@ -51,17 +63,19 @@ def text_preprocessing(search_text, threshold=90):
             if score >= threshold:
                 new_keywords += [new_word]
         n -= 1
-    
-    res = gdb.search(new_keywords)
-    
-    # for score, node in res[:3]:
-    #     paper = gdb.get_entity('Paper', name=node['name'])
-    #     name = paper.name
-    #     abstract = paper.abstract
-    #     for key in new_keywords:
-    #         name = re.sub(f'(?i){key}', f'**{key}**', name)
-    #         abstract = re.sub(key, f'**{key}**', abstract)
-    #     print(name)
-    #     print(abstract)
-    #     print('*'*100)
-    return res
+    new_keywords = _drop_insignificant_words(new_keywords)
+    return new_keywords
+        
+# TODO: prevent injection
+def search(keys: list, n=10):
+    # """this is search and rank function using
+    print('Search key:', keys)
+    for key in keys:
+        if not gdb.is_node_exist(key):
+            return ["Entity does not exist"]
+    if not gdb.is_cypher_graph_exist(keys):
+        gdb.create_cypher_graph(keys)
+    results = gdb.pagerank(keys)
+    gdb.delete_cypher_graph(keys)
+    print('Found papers:', len(results))
+    return results[:n]

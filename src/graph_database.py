@@ -41,7 +41,6 @@ class GraphDatabase():
             ORDER BY score DESC
         """
     CYPHER_CHECK_NODE_EXIST = "MATCH (n) WHERE n.name =~ '(?i){key}' RETURN count(n);"
-                # gds.util.asNode(nodeId).created AS created
     
     def __init__(self):
         username = settings.NEO4J_USERNAME
@@ -86,6 +85,11 @@ class GraphDatabase():
         target_entity.save()
         return target_entity
     
+    def count_entity(self, entity_name):
+        base_entity = self.get_entity_model('BaseEntity')
+        nodes = base_entity.nodes.filter(name__iexact=entity_name)
+        return sum([n.count for n in nodes])
+    
     def get_relation(self, relation_type, head_entity):
         assert isinstance(head_entity, models.BaseEntity)
         relation_type = relation_type.lower().replace('-', '_')
@@ -125,45 +129,32 @@ class GraphDatabase():
         relationship.save()
         return relationship
         
-    def _is_node_exist(self, key):
+    def is_node_exist(self, key):
         """ Check if node exist before searching """
         query = self.CYPHER_CHECK_NODE_EXIST.format(key=key)
         exist = (db.cypher_query(query)[0][0][0])
         return True if exist else False
 
-    def _is_cypher_graph_exist(self, keys: list):
+    def is_cypher_graph_exist(self, keys: list):
         graph_name = ''.join(keys)
         query = self.CYPHER_GRAPH_CHECK.format(graph_name=graph_name)
         is_exist = db.cypher_query(query)[0][0][1]
         return is_exist
     
-    def _create_cypher_graph(self, keys: list):
+    def create_cypher_graph(self, keys: list):
         graph_name = ''.join(keys)
         key = '|'.join(keys)
         query = self.CYPHER_GRAPH_CREATE.format(graph_name=graph_name, key=key)
         db.cypher_query(query)
     
-    def _delete_cypher_graph(self, keys: list):
+    def delete_cypher_graph(self, keys: list):
         graph_name = ''.join(keys)
         query = self.CYPHER_GRAPH_DELETE.format(graph_name=graph_name)
         db.cypher_query(query)
     
-    def _pagerank(self, keys: list):
+    def pagerank(self, keys: list):
         graph_name = ''.join(keys)
         key = '|'.join(keys)
         query = self.CYPHER_PAGE_RANK.format(graph_name=graph_name, key=key)
         results = db.cypher_query(query)[0]
         return results
-    
-    # TODO: prevent injection
-    def search(self, keys: list, n=10):
-        print('Search key:', keys)
-        for key in keys:
-            if not self._is_node_exist(key):
-                return ["Entity does not exist"]
-        if not self._is_cypher_graph_exist(keys):
-            self._create_cypher_graph(keys)
-        results = self._pagerank(keys)
-        self._delete_cypher_graph(keys)
-        print(len(results))
-        return results[:n]
