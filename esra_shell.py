@@ -62,7 +62,8 @@ if __name__ == '__main__':
     esra_shell = EsraShell()
     # esra_shell.cmdloop()
 
-    search_text = 'bert attention natural language processing'
+    search_text = 'bert natural language processing attention elmo'
+    print('Search text:', search_text)
     keywords = gs.text_preprocessing(search_text)
     r = gs.search(keywords)
     for i in r:

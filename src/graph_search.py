@@ -68,8 +68,8 @@ def text_preprocessing(search_text, threshold=90):
         
 # TODO: prevent injection
 def search(keys: list, n=10):
-    # """this is search and rank function using
-    print('Search key:', keys)
+    """return ranked papers from subgraph from those keywords using pagerank"""
+    print('Search keys:', keys)
     for key in keys:
         if not gdb.is_node_exist(key):
             return ["Entity does not exist"]
