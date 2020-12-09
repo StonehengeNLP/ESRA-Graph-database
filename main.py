@@ -23,6 +23,7 @@ for doc in data:
     paper_entity = graph_database.add_entity('Paper', meta[id]['DN'], 
                                              created=creation_date,
                                              mag_id=id,
+                                             abstract=meta[id]['ABS'],
                                              cc=meta[id]['CC'])
     for author in meta[id]['AA']:
         author_entity = graph_database.add_entity('Author', author['DAuN'])

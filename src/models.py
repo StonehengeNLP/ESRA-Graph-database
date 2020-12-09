@@ -1,10 +1,12 @@
 import neomodel
 from datetime import datetime
 
+DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+
 class BaseRelation(neomodel.StructuredRel):
     count = neomodel.IntegerProperty(default=1)
     weight = neomodel.FloatProperty(default=0)
-    create_at = neomodel.DateTimeFormatProperty(format="%Y-%m-%d %H:%M:%S", default_now=True)
+    create_at = neomodel.DateTimeFormatProperty(format=DATETIME_FORMAT, default_now=True)
     flag_violation = neomodel.BooleanProperty(default=False)
     
 class HyponymOf(BaseRelation):
@@ -44,7 +46,7 @@ class BaseEntity(neomodel.StructuredNode):
     name = neomodel.StringProperty(unique_index=True)
     count = neomodel.IntegerProperty(default=1)
     weight = neomodel.FloatProperty(default=0)
-    create_at = neomodel.DateTimeFormatProperty(format="%Y-%m-%d %H:%M:%S", default_now=True)
+    create_at = neomodel.DateTimeFormatProperty(format=DATETIME_FORMAT, default_now=True)
 
     # GOD attributes: relation from head (self) to Tail (other)
     used_for = neomodel.RelationshipTo(neomodel.StructuredNode, 'used_for', model=UsedFor)
@@ -82,8 +84,9 @@ class Abbreviation(BaseEntity):
 
 class Paper(BaseEntity):
     cc = neomodel.IntegerProperty()
+    abstract = neomodel.StringProperty()
     mag_id = neomodel.IntegerProperty()
-    created = neomodel.DateTimeFormatProperty(format="%Y-%m-%d")
+    created = neomodel.DateTimeFormatProperty(format=DATETIME_FORMAT)
 
 class Author(BaseEntity):
     pass

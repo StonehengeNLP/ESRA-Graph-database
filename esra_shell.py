@@ -1,6 +1,6 @@
 import cmd
 from os import system
-from src.graph_database import GraphDatabase
+from src import graph_search as gs
 
 
 INTRO = \
@@ -25,7 +25,6 @@ class EsraShell(cmd.Cmd):
     
     def __init__(self):
         super().__init__()
-        self.graph_database = GraphDatabase()
         
     def emptyline(self):
          pass
@@ -41,24 +40,26 @@ class EsraShell(cmd.Cmd):
     def do_search(self, line):
         """Search scientific papers by using keyword(s)"""
         line = line.replace('_', ' ')
-        results = self.graph_database.search(line)
-        for i in results:
-            print(*i, sep=' \t')
+        gs.text_preprocessing(line)
+        # results = self.graph_database.search(line)
+        # for i in results:
+        #     print(*i, sep=' \t')
                         
     def complete_search(self, text, line, start_index, end_index):
         if text:
             text = text.replace('_', ' ')
-            out = self.graph_database.text_autocomplete(text)
+            out = gs.text_autocomplete(text)
             if len(out) == 0:
-                out = self.graph_database.text_correction(text)
-            out = [i.replace(' ', '_') for i in out]
+                out = gs.text_correction(text)
+            out = out[0].replace(' ', '_')
             return out
         return []     
 
 if __name__ == '__main__':
     esra_shell = EsraShell()
-    esra_shell.cmdloop()
-    
-    # results = GraphDatabase().search('attention', 20)
-    # for i in results:
-    #     print(*i, sep=' \t')
+    # esra_shell.cmdloop()
+
+    search_text = 'attention'
+    r = gs.text_preprocessing(search_text)
+    for i in r:
+        print(i)

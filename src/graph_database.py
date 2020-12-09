@@ -2,39 +2,43 @@ from . import settings
 from . import models
 from . import validator
 from typing import List
-from fuzzywuzzy import fuzz
-from neomodel import config, db, Q, match
+from neomodel import config, db, match
 
 
 class GraphDatabase():
 
     CYPHER_DELETE_ALL = "MATCH (n) DETACH DELETE n"
-    CYPHER_GRAPH_CHECK = "CALL gds.graph.exists('{key}')"
+    CYPHER_GRAPH_CHECK = "CALL gds.graph.exists('{graph_name}')"
     CYPHER_GRAPH_CREATE = \
         """ CALL gds.graph.create.cypher(
-                '{key}',
-                'MATCH (n)-[e *1..2]-(m) WHERE m.name =~ "(?i){key}" RETURN distinct(id(n)) AS id',
-                'MATCH (n)-[e]-(m) RETURN id(n) AS source, e.weight AS weight, id(m) AS target',
+                '{graph_name}',
+                'MATCH (n)-[e *0..2]-(m) \
+                    WHERE m.name =~ "(?i)({key})" \
+                    RETURN distinct(id(n)) AS id',
+                'MATCH (n)-[e]-(m) \
+                    RETURN id(n) AS source, e.weight AS weight, id(m) AS target',
                 {{validateRelationships: false}}
             )
         """
-    CYPHER_GRAPH_DELETE = "CALL gds.graph.drop('{key}')"
+    CYPHER_GRAPH_DELETE = "CALL gds.graph.drop('{graph_name}')"
     CYPHER_PAGE_RANK = \
         """ MATCH (n)
-            WHERE n.name =~ "(?i){key}"
-            CALL gds.pageRank.stream('{key}', {{
+            WHERE n.name =~ "(?i)({key})"
+            CALL gds.pageRank.stream('{graph_name}', {{
                 maxIterations: 20,
                 dampingFactor: 0.85,
                 relationshipWeightProperty: 'weight',
                 sourceNodes: [n]
             }})
-            YIELD nodeId, score
-            WHERE gds.util.asNode(nodeId):Paper
-            RETURN DISTINCT 
-                score,
-                gds.util.asNode(nodeId).cc AS citation,
-                gds.util.asNode(nodeId).name AS name
-            ORDER BY score DESC, name ASC;
+            YIELD nodeId, score WITH gds.util.asNode(nodeId) as node, score
+            WHERE node:Paper
+            RETURN DISTINCT
+                sum(score) AS score,
+                node {{
+                    .cc,
+                    .name
+                }}
+            ORDER BY score DESC
         """
     CYPHER_CHECK_NODE_EXIST = "MATCH (n) WHERE n.name =~ '(?i){key}' RETURN count(n);"
                 # gds.util.asNode(nodeId).created AS created
@@ -49,21 +53,20 @@ class GraphDatabase():
     def clear_all(self):
         db.cypher_query(self.CYPHER_DELETE_ALL)
 
-    @classmethod
-    def get_entity_model(cls, entity_type):
+    def get_entity_model(self, entity_type):
         return models.__dict__[entity_type]
         
     def get_all_entities(self, entity_type:str) -> List[models.BaseEntity]:
-        entity_model = GraphDatabase.get_entity_model(entity_type)
+        entity_model = self.get_entity_model(entity_type)
         return entity_model.nodes.all()
     
     def get_entity(self, entity_type, **kwargs):
-        entity_model = GraphDatabase.get_entity_model(entity_type)
+        entity_model = self.get_entity_model(entity_type)
         target_entity = entity_model.nodes.get(**kwargs)
         return target_entity
     
     def is_entity_exist(self, entity_type, **kwargs):
-        entity_model = GraphDatabase.get_entity_model(entity_type)
+        entity_model = self.get_entity_model(entity_type)
         target_entity = entity_model.nodes.first_or_none(**kwargs)
         if target_entity == None:
             return False
@@ -76,7 +79,7 @@ class GraphDatabase():
             _weight_diff = (confidence - target_entity.weight) / target_entity.count
             target_entity.weight += _weight_diff
         else:
-            entity_model = GraphDatabase.get_entity_model(entity_type)
+            entity_model = self.get_entity_model(entity_type)
             target_entity = entity_model(name=entity_name)
             target_entity.weight = confidence
         target_entity.__dict__.update(kwargs)
@@ -121,61 +124,46 @@ class GraphDatabase():
         relationship.__dict__.update(kwargs)
         relationship.save()
         return relationship
-    
-    def text_autocomplete(self, text, n=10):
-        """suggest top 10 similar keywords based on the given text"""
-        base_entity = GraphDatabase.get_entity_model('BaseEntity')
-        nodes = base_entity.nodes.filter(name__istartswith=text.lower())
-        suggested_list = list({node.name.lower() for node in nodes[:100]})
-        return sorted(suggested_list, key=len)[:n]
-    
-    def text_correction(self, text, limit=1000):
-        """correct the text to be matched to a node"""
-        text = text.lower()
-        base_entity = GraphDatabase.get_entity_model('BaseEntity')
-        # match the first or second character 
-        nodes = base_entity.nodes.filter(
-            Q(name__istartswith=text[0]) | Q(name__regex=rf'^.{text[1]}.*'))
-        suggested_list = list({node.name.lower() for node in nodes[:limit]})
-        score = lambda x: fuzz.ratio(text, x.lower())
-        best = max(suggested_list, key=score)
-        # cut-off threshold 
-        if score(best) < 60:
-            return []
-        return [best]
-    
+        
     def _is_node_exist(self, key):
         """ Check if node exist before searching """
         query = self.CYPHER_CHECK_NODE_EXIST.format(key=key)
         exist = (db.cypher_query(query)[0][0][0])
         return True if exist else False
 
-    def _is_cypher_graph_exist(self, key):
-        query = self.CYPHER_GRAPH_CHECK.format(key=key)
+    def _is_cypher_graph_exist(self, keys: list):
+        graph_name = ''.join(keys)
+        query = self.CYPHER_GRAPH_CHECK.format(graph_name=graph_name)
         is_exist = db.cypher_query(query)[0][0][1]
         return is_exist
     
-    def _create_cypher_graph(self, key):
-        query = self.CYPHER_GRAPH_CREATE.format(key=key)
+    def _create_cypher_graph(self, keys: list):
+        graph_name = ''.join(keys)
+        key = '|'.join(keys)
+        query = self.CYPHER_GRAPH_CREATE.format(graph_name=graph_name, key=key)
         db.cypher_query(query)
     
-    def _delete_cypher_graph(self, key):
-        query = self.CYPHER_GRAPH_DELETE.format(key=key)
+    def _delete_cypher_graph(self, keys: list):
+        graph_name = ''.join(keys)
+        query = self.CYPHER_GRAPH_DELETE.format(graph_name=graph_name)
         db.cypher_query(query)
     
-    def _pagerank(self, key):
-        query = self.CYPHER_PAGE_RANK.format(key=key)
+    def _pagerank(self, keys: list):
+        graph_name = ''.join(keys)
+        key = '|'.join(keys)
+        query = self.CYPHER_PAGE_RANK.format(graph_name=graph_name, key=key)
         results = db.cypher_query(query)[0]
         return results
     
     # TODO: prevent injection
-    def search(self, key, n=10):
-        print('Search key:', key)
-        if not self._is_node_exist(key):
-            return ["Entity does not exist"]
-        if not self._is_cypher_graph_exist(key):
-            self._create_cypher_graph(key)
-        results = self._pagerank(key)
-        self._delete_cypher_graph(key)
+    def search(self, keys: list, n=10):
+        print('Search key:', keys)
+        for key in keys:
+            if not self._is_node_exist(key):
+                return ["Entity does not exist"]
+        if not self._is_cypher_graph_exist(keys):
+            self._create_cypher_graph(keys)
+        results = self._pagerank(keys)
+        self._delete_cypher_graph(keys)
         print(len(results))
         return results[:n]
