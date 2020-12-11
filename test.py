@@ -4,7 +4,7 @@ gdb = GraphDatabase()
 
 results = gdb.find_path(['BERT'],'BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding')
 
-relation_type_mapping ={
+relation_type_mapping = {
     'refer_to': 'also known as ',
     'used_for': 'used for ',
     'evaluate_for' : 'uses to evaluate ',
@@ -30,6 +30,8 @@ for i,path in enumerate(results):
 # pick n paths that have most weight
 MAXIMUM_PATH = 2
 ranking.sort(reverse=True)
+if MAXIMUM_PATH > len(results):
+    MAXIMUM_PATH = len(results)
 picked_idx = [ranking[i][1] for i in range(MAXIMUM_PATH)]
 
 # show explanation
