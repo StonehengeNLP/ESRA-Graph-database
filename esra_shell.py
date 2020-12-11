@@ -75,20 +75,10 @@ if __name__ == '__main__':
     for i in r:
         print(i)
     
-    gdb = GraphDatabase()
-    
-    # for score, node in r[:3]:
-    #     paper = gdb.get_entity('Paper', name=node['name'])
-    #     name = paper.name
-    #     abstract = paper.abstract
-    #     for key in keywords:
-    #         name = re.sub(f'(?i){key}', f'**{key}**', name)
-    #         abstract = re.sub(f'(?i){key}', f'**{key}**', abstract)
-    #     print(name)
-    #     print(abstract)
-    #     print('*'*100)
+    for i in r[:3]:
+        print(gs.explain(keywords, i[1]['name']))
 
-    gdb.find_path(['bert', 'attention'], 'MASS: Masked Sequence to Sequence Pre-training for Language Generation')
+    gdb = GraphDatabase()
     
     # # BM25
     # print('='*100)

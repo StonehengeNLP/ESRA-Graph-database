@@ -170,18 +170,16 @@ class GraphDatabase():
         results = db.cypher_query(query)[0]
         return results
     
-    # TODO: use given keys and title
-    def find_path(self, keys: list, paper_title: str):
+    def get_paths(self, keys: list, paper_title: str):
+        """get paths from keys to the paper"""
         key = '|'.join(keys)
         query = self.CYPHER_PATH_KEYS_PAPER.format(key=key, paper_title=paper_title)
         path = db.cypher_query(query)[0]
         paths = []
         for i in path:
-            # for j in i[0]._nodes:
-            #     print('Node:', j._properties['name'])
             temp_path = []
             for j in i[0]._relationships:
-                relation_type = j.__class__.__name__
+                relation_type = j.type
                 relation_weight = j._properties['weight']
                 start_node = j._start_node._properties['name']
                 start_node_class = list(j._start_node.labels)
