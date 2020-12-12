@@ -77,7 +77,9 @@ def text_preprocessing(search_text, threshold=90):
         n -= 1
     new_keywords = _drop_insignificant_words(new_keywords)
     return new_keywords
-        
+
+from datetime import datetime
+
 # TODO: prevent injection
 def search(keys: list, n=10):
     """return ranked papers from subgraph from those keywords using pagerank"""
@@ -92,7 +94,49 @@ def search(keys: list, n=10):
     print('Found papers:', len(results))
     return results[:n]
 
-def explain(keys: list, paper_title):
+    # NOTE: Rank by popular (cc / days) ?
+    #
+    # for p in results:
+    #     created = datetime.strptime(p[1]['created'], '%Y-%m-%d %H:%M:%S')
+    #     days = (datetime.now() - created).days
+    #     cc = p[1]['cc']
+    #     popular = cc / days
+    #     if 'elmo' in p[1]['name'].lower() or 'elmo' in p[1]['abstract'].lower():
+    #         p[0] = popular
+    #     else:
+    #         p[0] = 0
+    #     p[1].pop('abstract')
+            
+    # return sorted(results, key=lambda x: x[0])[::-1][:n]
+
+def explain(keys: list, paper_title, mode='model'):
+    if mode == 'template':
+        return _explain_template(keys, paper_title)
+    if mode == 'model':
+        print(paper_title)
+        
+        entities = []
+        types = []
+        relations = []
+        paths = gdb.get_paths(keys, paper_title)
+        for path in paths:
+            for r, w, s, e in path:
+                if s[0] not in entities and 'Paper' not in s[1]:
+                    entities += [s[0]]
+                    types += [s[1][0].lower()]
+                if e[0] not in entities and 'Paper' not in e[1]:
+                    entities += [e[0]]
+                    types += [e[1][0].lower()]
+                if s[0] in entities and e[0] in entities:
+                    rel = [s[0], r.upper().replace('_', '-'), e[0]]
+                    if rel not in relations:
+                        relations += [rel]
+        print(entities)
+        print(' '.join([f'<{i}>' for i in types]))
+        print([' -- '.join(rel) for rel in relations]) 
+
+
+def _explain_template(keys, paper_title):
     paths = gdb.get_paths(keys, paper_title)
     
     # calculate sum of weight of each path in order to rank

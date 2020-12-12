@@ -36,7 +36,9 @@ class GraphDatabase():
                 sum(score) AS score,
                 node {{
                     .cc,
-                    .name
+                    .name,
+                    .created,
+                    .abstract
                 }}
             ORDER BY score DESC
         """

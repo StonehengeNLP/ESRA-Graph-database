@@ -75,10 +75,10 @@ if __name__ == '__main__':
     for i in r:
         print(i)
     
-    for i in r[:3]:
-        print(gs.explain(keywords, i[1]['name']))
+    # for i in r[:3]:
+    #     print(gs.explain(keywords, i[1]['name']))
 
-    gdb = GraphDatabase()
+    # gdb = GraphDatabase()
     
     # # BM25
     # print('='*100)
