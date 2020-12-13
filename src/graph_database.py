@@ -34,12 +34,8 @@ class GraphDatabase():
             WHERE node:Paper
             RETURN DISTINCT
                 sum(score) AS score,
-                node {{
-                    .cc,
-                    .name,
-                    .created,
-                    .abstract
-                }}
+                node.cc,
+                node.name
             ORDER BY score DESC
         """
     CYPHER_CHECK_NODE_EXIST = "MATCH (n) WHERE n.name =~ '(?i){key}' RETURN count(n);"
