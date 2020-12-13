@@ -137,8 +137,8 @@ def _search_popularity(keys, n):
 def explain(keys: list, paper_title, mode='template'):
     if mode == 'template':
         return _explain_template(keys, paper_title)
-    if mode == 'kg2text':
-        return _explain_kg2text(keys, paper_title)
+    # if mode == 'kg2text':
+    #     return _explain_kg2text(keys, paper_title)
 
 def _explain_template(keys, paper_title):
     paths = gdb.get_paths(keys, paper_title)
@@ -179,48 +179,48 @@ def _explain_template(keys, paper_title):
         out += [explanation]
     return out
         
-def _prepare_kg2text(keys: list, paper_title: str):
-        entities = []
-        types = []
-        relations = []
-        paths = gdb.get_paths(keys, paper_title)
-        for path in paths:
-            for r, w, s, e in path:
-                if s[0] not in entities and 'Paper' not in s[1]:
-                    entities += [s[0]]
-                    t = s[1][0].lower()
-                    if t == 'abbreviation':
-                        t = 'method'
-                    types += [t]
-                if e[0] not in entities and 'Paper' not in e[1]:
-                    entities += [e[0]]
-                    t = e[1][0].lower()
-                    if t == 'abbreviation':
-                        t = 'method'
-                    types += [t]
-                if s[0] in entities and e[0] in entities:
-                    if r == 'refer_to':
-                        r = 'hyponym_of'
-                    rel = [s[0], r.upper().replace('_', '-'), e[0]]
-                    if rel not in relations:
-                        relations += [rel]
-        d = {}
-        d['title'] = paper_title
-        d['entities'] = entities
-        d['types'] = ' '.join([f'<{i}>' for i in types])
-        d['relations'] = [' -- '.join(rel) for rel in relations]
-        d['abstract'] = ' '.join([f'<{t}_{i}>' for i, t in enumerate(types)])
-        d['abstract_og'] = ' '.join(entities)
-        return d
+# def _prepare_kg2text(keys: list, paper_title: str):
+#         entities = []
+#         types = []
+#         relations = []
+#         paths = gdb.get_paths(keys, paper_title)
+#         for path in paths:
+#             for r, w, s, e in path:
+#                 if s[0] not in entities and 'Paper' not in s[1]:
+#                     entities += [s[0]]
+#                     t = s[1][0].lower()
+#                     if t == 'abbreviation':
+#                         t = 'method'
+#                     types += [t]
+#                 if e[0] not in entities and 'Paper' not in e[1]:
+#                     entities += [e[0]]
+#                     t = e[1][0].lower()
+#                     if t == 'abbreviation':
+#                         t = 'method'
+#                     types += [t]
+#                 if s[0] in entities and e[0] in entities:
+#                     if r == 'refer_to':
+#                         r = 'hyponym_of'
+#                     rel = [s[0], r.upper().replace('_', '-'), e[0]]
+#                     if rel not in relations:
+#                         relations += [rel]
+#         d = {}
+#         d['title'] = paper_title
+#         d['entities'] = entities
+#         d['types'] = ' '.join([f'<{i}>' for i in types])
+#         d['relations'] = [' -- '.join(rel) for rel in relations]
+#         d['abstract'] = ' '.join([f'<{t}_{i}>' for i, t in enumerate(types)])
+#         d['abstract_og'] = ' '.join(entities)
+#         return d
 
-# TODO: add the model to this system        
-def _explain_kg2text(keys: list, paper_title): 
-    return _prepare_kg2text(keys, paper_title)
+# # TODO: add the model to this system        
+# def _explain_kg2text(keys: list, paper_title): 
+#     return _prepare_kg2text(keys, paper_title)
     
-    if isinstance(paper_title, str):
-        _prepare_kg2text(keys, paper_title)
+#     if isinstance(paper_title, str):
+#         _prepare_kg2text(keys, paper_title)
         
-    elif isinstance(paper_title, list):
-        for title in paper_title:
-            _prepare_kg2text(keys, paper_title)
+#     elif isinstance(paper_title, list):
+#         for title in paper_title:
+#             _prepare_kg2text(keys, paper_title)
             
