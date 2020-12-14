@@ -40,37 +40,43 @@ class EsraShell(cmd.Cmd):
         
     def do_search(self, line):
         """Search scientific papers by using keyword(s)"""
-        line = line.replace('_', ' ')
-        gs.text_preprocessing(line)
-        # results = self.graph_database.search(line)
-        # for i in results:
-        #     print(*i, sep=' \t')
+        keywords = gs.text_preprocessing(line)
+        t = time.time()
+        r = gs.search(keywords, mode='popularity')
+        print('Time:', time.time() - t, 's')
+        for i in r:
+            print(*i, sep=' \t')
                         
     def complete_search(self, text, line, start_index, end_index):
         if text:
-            text = text.replace('_', ' ')
-            out = gs.text_autocomplete(text)
-            if len(out) == 0:
+            tokenized_text = line.split()[1:]
+            for i in range(len(text)):
+                temp_text = ' '.join(tokenized_text[i:])
+                out = gs.text_autocomplete(temp_text)
+                if out:
+                    n_skip = temp_text.count(' ')
+                    out = [' '.join(word.split()[n_skip:]) for word in out]
+                    break
+            else:
                 out = gs.text_correction(text)
-            out = out[0].replace(' ', '_')
             return out
         return []
     
 
 if __name__ == '__main__':
     esra_shell = EsraShell()
-    # esra_shell.cmdloop()
+    esra_shell.cmdloop()
 
-    search_text = 'bert'
-    print('Search text:', search_text)
-    keywords = gs.text_preprocessing(search_text)
+    # search_text = 'bert'
+    # print('Search text:', search_text)
+    # keywords = gs.text_preprocessing(search_text)
     
-    # PageRank
-    t = time.time()
-    r = gs.search(keywords, mode='pagerank')
-    print('Time:', time.time() - t, 's')
-    for i in r:
-        print(i)
+    # # PageRank
+    # t = time.time()
+    # r = gs.search(keywords, mode='pagerank')
+    # print('Time:', time.time() - t, 's')
+    # for i in r:
+    #     print(i)
         
     # # BM25
     # t = time.time()
@@ -86,6 +92,5 @@ if __name__ == '__main__':
     # for i in r:
     #     print(i)
     
-    for i in r[:3]:
-        print(gs.explain(keywords, i[2], mode='template'))
-        # print(gs.explain(keywords, i[2], mode='kg2text'))
+    # for i in r[:3]:
+    #     print(gs.explain(keywords, i[2], mode='template'))
