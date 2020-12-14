@@ -128,7 +128,7 @@ def _search_popularity(keys, n):
         popular = cc / days
         count = 0
         for key in keys:
-            if key in p.name.lower():
+            if key in p.name.lower() or key in p.abstract.lower():
                 count += 1
         results += [[popular * count, p.cc, p.name]]
     results = sorted(results, key=lambda x: x[0])[::-1]
