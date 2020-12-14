@@ -66,11 +66,11 @@ class EsraShell(cmd.Cmd):
 
 if __name__ == '__main__':
     esra_shell = EsraShell()
-    esra_shell.cmdloop()
+    # esra_shell.cmdloop()
 
-    # search_text = 'bert'
-    # print('Search text:', search_text)
-    # keywords = gs.text_preprocessing(search_text)
+    search_text = 'bert'
+    print('Search text:', search_text)
+    keywords = gs.text_preprocessing(search_text)
     
     # # PageRank
     # t = time.time()
@@ -86,12 +86,12 @@ if __name__ == '__main__':
     # for i in r:
     #     print(i)
         
-    # # Popularity
-    # t = time.time()
-    # r = gs.search(keywords, mode='popularity')
-    # print('Time:', time.time() - t, 's')
-    # for i in r:
-    #     print(i)
+    # Popularity
+    t = time.time()
+    r = gs.search(keywords, mode='popularity')
+    print('Time:', time.time() - t, 's')
+    for i in r:
+        print(i)
     
-    # for i in r[:3]:
-    #     print(gs.explain(keywords, i[2], mode='template'))
+    for i in r[:3]:
+        print(gs.explain(keywords, i[2], mode='template'))

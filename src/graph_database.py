@@ -45,7 +45,7 @@ class GraphDatabase():
             WHERE n.name =~ "(?i)({key})"
             MATCH (m)
             WHERE m.name = "{paper_title}"
-            MATCH path = (n)-[*..2]-(m)
+            MATCH path = (n)-[*..{hops}]-(m)
             WITH *, relationships(path) AS r
             WHERE type(r[-1]) = "appear_in"
             RETURN  path
@@ -171,12 +171,15 @@ class GraphDatabase():
     def get_paths(self, keys: list, paper_title: str):
         """get paths from keys to the paper"""
         key = '|'.join(keys)
-        query = self.CYPHER_PATH_KEYS_PAPER.format(key=key, paper_title=paper_title)
-        path = db.cypher_query(query)[0]
-        paths = []
-        for i in path:
+        for hops in [1, 2]: # one or two hops only
+            query = self.CYPHER_PATH_KEYS_PAPER.format(key=key, paper_title=paper_title, hops=hops)
+            paths = db.cypher_query(query)[0]
+            if paths:
+                break
+        new_paths = []
+        for path in paths:
             temp_path = []
-            for j in i[0]._relationships:
+            for j in path[0]._relationships:
                 relation_type = j.type
                 relation_weight = j._properties['weight']
                 start_node = j._start_node._properties['name']
@@ -186,5 +189,5 @@ class GraphDatabase():
                 end_node_class = list(j._end_node.labels)
                 end_node_class = [label for label in end_node_class if label != 'BaseEntity']
                 temp_path.append([relation_type, relation_weight, (start_node, start_node_class), (end_node, end_node_class)])
-            paths.append(temp_path)
-        return paths
+            new_paths.append(temp_path)
+        return new_paths
