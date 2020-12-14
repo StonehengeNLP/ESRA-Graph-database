@@ -50,7 +50,7 @@ class EsraShell(cmd.Cmd):
     def complete_search(self, text, line, start_index, end_index):
         if text:
             tokenized_text = line.split()[1:]
-            for i in range(len(text)):
+            for i in range(len(tokenized_text)):
                 temp_text = ' '.join(tokenized_text[i:])
                 out = gs.text_autocomplete(temp_text)
                 if out:
@@ -58,7 +58,8 @@ class EsraShell(cmd.Cmd):
                     out = [' '.join(word.split()[n_skip:]) for word in out]
                     break
             else:
-                out = gs.text_correction(text)
+                corrected = gs.text_correction(text)
+                out = [corrected[0]]
             return out
         return []
     
