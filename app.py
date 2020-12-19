@@ -23,7 +23,7 @@ def swagger():
         swagger_json = json.load(f)
         
     swagger_env = settings.FLASK_ENV
-    if swagger_env == 'production.':
+    if swagger_env == 'production':
         swagger_json['host'] = 'graph-database-manager.herokuapp.com'
     elif swagger_env == 'development':
         swagger_json['host'] = 'localhost:5000'
