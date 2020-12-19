@@ -4,3 +4,5 @@ fuzzywuzzy
 symspellpy
 rank_bm25
 gunicorn
+flask
+numpy
