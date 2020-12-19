@@ -21,7 +21,7 @@ app.register_blueprint(swaggerui_blueprint)
 def swagger():
     with open('swagger.json') as f:
         swagger_json = json.load(f)
-        
+
     swagger_env = settings.FLASK_ENV
     if swagger_env == 'production.':
         swagger_json['host'] = 'graph-database-manager.herokuapp.com'
