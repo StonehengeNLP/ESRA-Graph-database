@@ -22,8 +22,7 @@
         }
     ],
     "schemes": [
-        "http",
-        "https"
+        "http"
     ],
     "paths": {
         "/complete": {
