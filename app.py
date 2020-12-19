@@ -1,4 +1,5 @@
 import json
+from src import settings
 from src import graph_search as gs
 from flask import Flask, jsonify, request
 from flask_swagger_ui import get_swaggerui_blueprint
@@ -11,7 +12,7 @@ swaggerui_blueprint = get_swaggerui_blueprint(
     SWAGGER_URL,
     API_URL,
     config={
-        'app_name': "Test application"
+        'app_name': "ESRA GDBM Swagger"
     },
 )
 app.register_blueprint(swaggerui_blueprint)
@@ -20,7 +21,14 @@ app.register_blueprint(swaggerui_blueprint)
 def swagger():
     with open('swagger.json') as f:
         swagger_json = json.load(f)
-        return swagger_json
+        
+    swagger_env = settings.FLASK_ENV
+    if swagger_env == 'production.':
+        swagger_json['host'] = 'graph-database-manager.herokuapp.com'
+    elif swagger_env == 'development':
+        swagger_json['host'] = 'localhost:5000'
+        
+    return swagger_json
     
 @app.route('/complete')
 def complete():
