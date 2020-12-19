@@ -6,3 +6,4 @@ rank_bm25
 gunicorn
 flask
 numpy
+flask-swagger-ui
