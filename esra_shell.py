@@ -66,8 +66,7 @@ class EsraShell(cmd.Cmd):
 
 if __name__ == '__main__':
     esra_shell = EsraShell()
-    esra_shell.cmdloop()
-
+    # esra_shell.cmdloop()
 
     search_text = 'bert'
     print('Search text:', search_text)

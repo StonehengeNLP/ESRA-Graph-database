@@ -1,0 +1,127 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a documentation of Graph Database Manager APIs, a part of ESRA project",
+        "version": "1.0.5",
+        "title": "ESRA Graph Database Manager",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "email": "plw.hwm@gmail.com"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        }
+    },
+    "host": "https://graph-database-manager.herokuapp.com",
+    "basePath": "/",
+    "tags": [
+        {
+            "name": "Graph Database",
+            "description": "Graph database management"
+        }
+    ],
+    "schemes": [
+        "http",
+        "https"
+    ],
+    "paths": {
+        "/complete": {
+            "get": {
+                "tags": [
+                    "Graph Database"
+                ],
+                "summary": "Autocompletion",
+                "operationId": "autocompletion",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "query keywords",
+                        "required": true,
+                        "example": "bert"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "400": {
+                        "description": "Missing parameter"
+                    },
+                    "503": {
+                        "description": "Service unavailable"
+                    }
+                }
+            }
+        },
+        "/explain": {
+            "post": {
+                "tags": [
+                    "Graph Database"
+                ],
+                "summary": "Explain the given papers from the query keyword",
+                "operationId": "explain",
+                "parameters": [
+                    {
+                        "name": "data",
+                        "in": "body",
+                        "description": "keyword and papers",
+                        "required": true,
+                        "properties": {
+                            "keyword": {
+                                "type": "string",
+                                "example": "bert"
+                            },
+                            "papers": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "example": [
+                                    "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+                                    "ALBERT: A Lite BERT for Self-supervised Learning of Language Representations"
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "400": {
+                        "description": "Missing parameter"
+                    },
+                    "503": {
+                        "description": "Service unavailable"
+                    }
+                }
+            }
+        }
+    },
+    "securitySchemes": {
+        "cookieAuth": {
+            "type": "apiKey",
+            "in": "cookie",
+            "name": "SigToken"
+        }
+    },
+    "definitions": {
+        "user": {
+            "type": "object",
+            "properties": {
+                "username": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "externalDocs": {
+        "description": "Find out more about Swagger",
+        "url": "http://swagger.io"
+    }
+}
