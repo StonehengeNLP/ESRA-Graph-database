@@ -24,23 +24,40 @@ def swagger():
     
 @app.route('/complete')
 def complete():
-    query = request.args.get("q")
+    query = request.args.get('q')
     if not query:
-        return jsonify({"msg": "Missing query parameter"}), 400
+        return jsonify({'msg': 'Missing query parameter'}), 400
     
     tokenized_text = query.split()
     for i in range(len(tokenized_text)):
         temp_text = ' '.join(tokenized_text[i:])
-        out = gs.text_autocomplete(temp_text)
+        try:
+            out = gs.text_autocomplete(temp_text)
+        except:
+            return jsonify({'msg': 'Database is not available'}), 503
         if out:
-            n_skip = temp_text.count(' ')
             out = [' '.join(word.split()) for word in out]
             break
-    return {'sentences': out}
+    return jsonify({'sentences': out}), 200
+
+# NOTE: this may be changed from whole paper titles to just their ids
+@app.route('/explain', methods=['POST'])
+def explanation():
+    if not request.is_json:
+        return jsonify({"msg": "Missing JSON in request"}), 400    
     
-    papers = gs.search(query, mode='popularity')
-    response = {'papers': papers}
-    return response
+    keyword = request.json.get('keyword', None)
+    papers = request.json.get('papers', None)
+    if not keyword:
+        return jsonify({"msg": "Missing 'keyword' parameter"}), 400
+    if not papers:
+        return jsonify({"msg": "Missing 'paperIds' parameter"}), 400
+    
+    processed_keywords = gs.text_preprocessing(keyword)
+    explanations = []
+    for paper in papers:
+        explanations.append(gs.explain(processed_keywords, paper, mode='template'))
+    return jsonify({'explanations': explanations}), 200
 
 if __name__ == '__main__':
     app.run(debug=True)
