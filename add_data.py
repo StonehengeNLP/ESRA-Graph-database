@@ -13,7 +13,7 @@ with open('data/data_5000_mag.json') as f:
 graph_database = GraphDatabase()
 graph_database.clear_all()
 
-for doc in data:
+for doc in data[:100]:
     entities = doc['entities']
     relations = doc['relations']
     id = doc['id']

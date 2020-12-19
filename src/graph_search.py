@@ -84,7 +84,6 @@ def text_preprocessing(search_text, threshold=90):
 # TODO: prevent injection
 def search(keys: list, n=10, mode='pagerank'):
     """return ranked papers from subgraph from those keywords using pagerank"""
-    print('Search keys:', keys)
     if mode == 'pagerank':
         results = _search_pagerank(keys, n)
     elif mode == 'bm25':
