@@ -52,7 +52,8 @@ for id in tqdm.tqdm(meta):
     if graph_database.is_entity_exist('Paper', mag_id=id):
         paper = graph_database.get_entity('Paper', mag_id=id)
         if 'RId' not in meta[id]:
-            print(id)
+            pass
+            # print(id)
         else:
             for rid in meta[id]['RId']:       
                 if graph_database.is_entity_exist('Paper', mag_id=rid):
