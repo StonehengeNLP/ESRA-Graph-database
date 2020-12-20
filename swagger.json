@@ -131,6 +131,35 @@
                     }
                 }
             }
+        },
+        "/facts": {
+            "get": {
+                "tags": [
+                    "Graph Database"
+                ],
+                "summary": "List of facts",
+                "operationId": "facts",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "query keywords",
+                        "required": true,
+                        "example": "bert"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "400": {
+                        "description": "Missing parameter"
+                    },
+                    "503": {
+                        "description": "Service unavailable"
+                    }
+                }
+            }
         }
     },
     "securitySchemes": {

@@ -177,7 +177,7 @@ def _explain_template(keys, paper_title):
         
         out += [explanation]
     return out
-        
+
 # def _prepare_kg2text(keys: list, paper_title: str):
 #         entities = []
 #         types = []
@@ -223,3 +223,7 @@ def _explain_template(keys, paper_title):
 #         for title in paper_title:
 #             _prepare_kg2text(keys, paper_title)
             
+def get_facts(keys: list):
+    fact_list, scheme = gdb.get_one_hops(keys)
+    results = [{k:v for k, v in zip(scheme, fact)} for fact in fact_list]
+    return results
