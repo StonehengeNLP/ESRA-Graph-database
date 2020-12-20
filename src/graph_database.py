@@ -50,6 +50,19 @@ class GraphDatabase():
             WHERE type(r[-1]) = "appear_in"
             RETURN  path
         """
+    CYPHER_ONE_HOP = \
+        """
+            MATCH (n)-[e]-(m)
+            WHERE n.name =~ "(?i)({key})" 
+                AND NOT m:Paper
+            RETURN DISTINCT
+                round(e.weight,4) as score,
+                type(e) as type,
+                startnode(e) = n as isSubject,
+                m.name as name
+            ORDER BY score DESC
+            LIMIT 10
+        """
     
     def __init__(self):
         username = settings.NEO4J_USERNAME
@@ -191,3 +204,9 @@ class GraphDatabase():
                 temp_path.append([relation_type, relation_weight, (start_node, start_node_class), (end_node, end_node_class)])
             new_paths.append(temp_path)
         return new_paths
+
+    def get_one_hops(self, keys: list):
+        key = '|'.join(keys)
+        query = self.CYPHER_ONE_HOP.format(key=key)
+        results = db.cypher_query(query)
+        return results

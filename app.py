@@ -35,6 +35,9 @@ def complete():
     if not query:
         return jsonify({'msg': 'Missing query parameter'}), 400
     
+    if len(query.strip()) == 0:
+        return {'sentences': []}, 200
+    
     tokenized_text = query.split()
     for i in range(len(tokenized_text)):
         temp_text = ' '.join(tokenized_text[i:])
@@ -75,11 +78,31 @@ def explanation():
     if not papers:
         return jsonify({"msg": "Missing 'paperIds' parameter"}), 400
     
-    processed_keywords = gs.text_preprocessing(keyword)
+    try:
+        processed_keywords = gs.text_preprocessing(keyword)
+    except:
+        return jsonify({'msg': 'Database is not available'}), 503
     explanations = []
     for paper in papers:
         explanations.append(gs.explain(processed_keywords, paper.lower(), mode='template'))
     return jsonify({'explanations': explanations}), 200
 
+@app.route('/facts')
+def list_of_facts():
+    query = request.args.get('q')
+    if not query:
+        return jsonify({'msg': 'Missing query parameter'}), 400
+    
+    if len(query.strip()) == 0:
+        return {'facts': []}, 200
+    
+    try:
+        processed_keywords = gs.text_preprocessing(query)
+    except:
+        return jsonify({'msg': 'Database is not available'}), 503
+    
+    fact_list = gs.get_facts(processed_keywords)
+    return {'facts': fact_list}, 200
+    
 if __name__ == '__main__':
     app.run(debug=True)
