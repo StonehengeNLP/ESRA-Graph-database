@@ -132,7 +132,7 @@ class GraphDatabase():
         try:
             validator.validate_relation(relation_type, head_entity, tail_entity)
         except Exception as e:
-            print(e)
+            # print(e)
             relationship.flag_violation = True
         relationship.__dict__.update(kwargs)
         relationship.save()

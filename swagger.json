@@ -97,6 +97,40 @@
                     }
                 }
             }
+        },
+        "/preprocess": {
+            "post": {
+                "tags": [
+                    "Graph Database"
+                ],
+                "summary": "Extract keywords from the given text",
+                "operationId": "preprocess",
+                "parameters": [
+                    {
+                        "name": "data",
+                        "in": "body",
+                        "description": "text or sentence",
+                        "required": true,
+                        "properties": {
+                            "text": {
+                                "type": "string",
+                                "example": "bert attention natural language processing"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "400": {
+                        "description": "Missing parameter"
+                    },
+                    "503": {
+                        "description": "Service unavailable"
+                    }
+                }
+            }
         }
     },
     "securitySchemes": {
