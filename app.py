@@ -47,6 +47,21 @@ def complete():
             break
     return jsonify({'sentences': out}), 200
 
+@app.route('/preprocess', methods=['POST'])
+def preprocess():
+    if not request.is_json:
+        return jsonify({"msg": "Missing JSON in request"}), 400    
+    
+    text = request.json.get('text', None)
+    if not text:
+        return jsonify({"msg": "Missing 'text' parameter"}), 400
+    
+    try:
+        processed_keywords = gs.text_preprocessing(text)
+    except:
+        return jsonify({'msg': 'Database is not available'}), 503
+    return jsonify({'keywords': processed_keywords}), 200
+
 # NOTE: this may be changed from whole paper titles to just their ids
 @app.route('/explain', methods=['POST'])
 def explanation():
@@ -63,7 +78,7 @@ def explanation():
     processed_keywords = gs.text_preprocessing(keyword)
     explanations = []
     for paper in papers:
-        explanations.append(gs.explain(processed_keywords, paper, mode='template'))
+        explanations.append(gs.explain(processed_keywords, paper.lower(), mode='template'))
     return jsonify({'explanations': explanations}), 200
 
 if __name__ == '__main__':
