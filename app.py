@@ -63,7 +63,7 @@ def preprocess():
         processed_keywords = gs.text_preprocessing(text)
     except:
         return jsonify({'msg': 'Database is not available'}), 503
-    return jsonify({'keywords': processed_keywords}), 200
+    return jsonify(processed_keywords), 200
 
 # NOTE: this may be changed from whole paper titles to just their ids
 @app.route('/explain', methods=['POST'])
@@ -97,7 +97,7 @@ def list_of_facts():
         return {'facts': []}, 200
     
     try:
-        processed_keywords = gs.text_preprocessing(query)
+        processed_keywords = gs.text_preprocessing(query, flatten=True)
     except:
         return jsonify({'msg': 'Database is not available'}), 503
     
