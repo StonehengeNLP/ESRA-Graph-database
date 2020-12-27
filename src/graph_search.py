@@ -5,6 +5,7 @@ from fuzzywuzzy import fuzz
 from datetime import datetime
 from rank_bm25 import BM25Okapi
 from .graph_database import GraphDatabase
+from .semantic_search import get_related_word
 
 RELATION_TYPE_MAPPING = {
     'refer_to': 'also known as ',
@@ -67,8 +68,17 @@ def _drop_insignificant_words(keywords: list):
             d[keyword] = c
     return list(d.keys())
 
-def text_preprocessing(search_text, threshold=90):
+def text_preprocessing(search_text, threshold=95, flatten=False):
     """correct and filter n-gram keywords by similarity threshold"""
+    search_text = search_text.lower()
+    
+    # perfect match: one keyword
+    if gdb.is_entity_exist('BaseEntity', name=search_text):
+        if flatten:
+            return [search_text]
+        return {search_text: []}
+        
+    # not match directly: multiple keywords
     n = len(search_text.split())
     new_keywords = []
     while n:
@@ -78,7 +88,21 @@ def text_preprocessing(search_text, threshold=90):
             if score >= threshold:
                 new_keywords += [new_word]
         n -= 1
+    
+    # drop insignificant words
     new_keywords = _drop_insignificant_words(new_keywords)
+
+    # find other relavant words
+    new_keywords = get_related_word(new_keywords)
+    print(new_keywords)
+    
+    # flatten the keywords in dict format
+    if flatten:        
+        flatten_list = []
+        for k, v in new_keywords.items():
+            flatten_list += [k] + v
+        return flatten_list
+
     return new_keywords
 
 # TODO: prevent injection
@@ -227,3 +251,7 @@ def get_facts(keys: list):
     fact_list, scheme = gdb.get_one_hops(keys)
     results = [{k:v for k, v in zip(scheme, fact)} for fact in fact_list]
     return results
+
+def get_all_vocabs():
+    entities = gdb.get_all_entities('BaseEntity')
+    return [i.name for i in entities]

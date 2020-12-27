@@ -56,6 +56,7 @@ class GraphDatabase():
             WHERE n.name =~ "(?i)({key})" 
                 AND NOT m:Paper
             RETURN DISTINCT
+                n.name as key,
                 round(e.weight,4) as score,
                 type(e) as type,
                 startnode(e) = n as isSubject,
