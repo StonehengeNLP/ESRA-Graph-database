@@ -13,6 +13,14 @@ vocab_embeddings_path = os.path.join(view_dir, '../data/vocab_embeddings.pickle'
 
 with open(vocab_path, encoding='utf-8') as f:
     vocab = [i.strip() for i in f.readlines()]
+    
+if os.path.isfile(vocab_path) and not os.path.isfile(vocab_embeddings_path):
+    vocab_embeddings = model_roberta.encode(vocab)
+
+    with open(vocab_embeddings_path, 'wb') as f:
+        pickle.dump(vocab_embeddings, f)
+    
+
 with open(vocab_embeddings_path, 'rb') as f:
     vocab_embeddings = pickle.load(f)
 
