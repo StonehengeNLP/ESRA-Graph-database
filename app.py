@@ -79,9 +79,11 @@ def explanation():
         return jsonify({"msg": "Missing 'paperIds' parameter"}), 400
     
     try:
-        processed_keywords = gs.text_preprocessing(keyword)
-    except:
+        processed_keywords = gs.text_preprocessing(keyword, flatten=True)
+    except Exception as e:
+        print(e)
         return jsonify({'msg': 'Database is not available'}), 503
+    
     explanations = []
     for paper in papers:
         explanations.append(gs.explain(processed_keywords, paper.lower(), mode='template'))
