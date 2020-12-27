@@ -94,7 +94,6 @@ def text_preprocessing(search_text, threshold=95, flatten=False):
 
     # find other relavant words
     new_keywords = get_related_word(new_keywords)
-    print(new_keywords)
     
     # flatten the keywords in dict format
     if flatten:        
