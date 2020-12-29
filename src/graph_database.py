@@ -1,3 +1,14 @@
+"""
+src.graph_database
+
+This module is for communicating with Hosted Neo4j somewhere
+I have prevented injection by putting the "key" as params when querying
+some param like "paper_title" and "hops" are type-validated already
+
+This might not be the best practice, so feel free to edit it
+"""
+
+import re
 from . import settings
 from . import models
 from . import validator
@@ -8,23 +19,23 @@ from neomodel import config, db, match
 class GraphDatabase():
 
     CYPHER_DELETE_ALL = "MATCH (n) DETACH DELETE n"
-    CYPHER_GRAPH_CHECK = "CALL gds.graph.exists('{graph_name}')"
+    CYPHER_GRAPH_CHECK = "CALL gds.graph.exists( $graph_name )"
     CYPHER_GRAPH_CREATE = \
         """ CALL gds.graph.create.cypher(
-                '{graph_name}',
+                $graph_name,
                 'MATCH (n)-[e *0..2]-(m) \
-                    WHERE m.name =~ "(?i)({key})" \
+                    WHERE m.name =~ $key \
                     RETURN distinct(id(n)) AS id',
                 'MATCH (n)-[e]-(m) \
                     RETURN id(n) AS source, e.weight AS weight, id(m) AS target',
                 {{validateRelationships: false}}
             )
         """
-    CYPHER_GRAPH_DELETE = "CALL gds.graph.drop('{graph_name}')"
+    CYPHER_GRAPH_DELETE = "CALL gds.graph.drop($graph_name)"
     CYPHER_PAGE_RANK = \
         """ MATCH (n)
-            WHERE n.name =~ "(?i)({key})"
-            CALL gds.pageRank.stream('{graph_name}', {{
+            WHERE n.name =~ $key
+            CALL gds.pageRank.stream( $graph_name, {{
                 maxIterations: 20,
                 dampingFactor: 0.85,
                 relationshipWeightProperty: 'weight',
@@ -38,13 +49,13 @@ class GraphDatabase():
                 node.name
             ORDER BY score DESC
         """
-    CYPHER_CHECK_NODE_EXIST = "MATCH (n) WHERE n.name =~ '(?i){key}' RETURN count(n);"
+    CYPHER_CHECK_NODE_EXIST = "MATCH (n) WHERE n.name =~ $key RETURN count(n);"
     CYPHER_PATH_KEYS_PAPER = \
         """
             MATCH (n)
-            WHERE n.name =~ "(?i)({key})"
+            WHERE n.name =~ $key
             MATCH (m)
-            WHERE m.name = "{paper_title}"
+            WHERE m.name =~ $paper_title
             MATCH path = (n)-[*..{hops}]-(m)
             WITH *, relationships(path) AS r
             WHERE type(r[-1]) = "appear_in"
@@ -53,7 +64,7 @@ class GraphDatabase():
     CYPHER_ONE_HOP = \
         """
             MATCH (n)-[e]-(m)
-            WHERE n.name =~ "(?i)({key})" 
+            WHERE n.name =~ $key
                 AND NOT m:Paper
             RETURN DISTINCT
                 n.name as key,
@@ -74,7 +85,7 @@ class GraphDatabase():
 
     def clear_all(self):
         db.cypher_query(self.CYPHER_DELETE_ALL)
-
+        
     def get_entity_model(self, entity_type):
         return models.__dict__[entity_type]
         
@@ -154,40 +165,35 @@ class GraphDatabase():
         
     def is_node_exist(self, key):
         """ Check if node exist before searching """
-        query = self.CYPHER_CHECK_NODE_EXIST.format(key=key)
-        exist = (db.cypher_query(query)[0][0][0])
+        exist = (db.cypher_query(self.CYPHER_CHECK_NODE_EXIST, {'key': key})[0][0][0])
         return True if exist else False
 
     def is_cypher_graph_exist(self, keys: list):
         graph_name = ''.join(keys)
-        query = self.CYPHER_GRAPH_CHECK.format(graph_name=graph_name)
-        is_exist = db.cypher_query(query)[0][0][1]
+        is_exist = db.cypher_query(self.CYPHER_GRAPH_CHECK, {'graph_name': graph_name})[0][0][1]
         return is_exist
     
     def create_cypher_graph(self, keys: list):
         graph_name = ''.join(keys)
         key = '|'.join(keys)
-        query = self.CYPHER_GRAPH_CREATE.format(graph_name=graph_name, key=key)
-        db.cypher_query(query)
+        db.cypher_query(self.CYPHER_GRAPH_CREATE, {'graph_name': graph_name, 'key': key})
     
     def delete_cypher_graph(self, keys: list):
         graph_name = ''.join(keys)
-        query = self.CYPHER_GRAPH_DELETE.format(graph_name=graph_name)
-        db.cypher_query(query)
+        db.cypher_query(self.CYPHER_GRAPH_DELETE, {'graph_name': graph_name})
     
     def pagerank(self, keys: list):
         graph_name = ''.join(keys)
         key = '|'.join(keys)
-        query = self.CYPHER_PAGE_RANK.format(graph_name=graph_name, key=key)
-        results = db.cypher_query(query)[0]
+        results = db.cypher_query(self.CYPHER_PAGE_RANK, {'key': key, 'graph_name': graph_name})[0]
         return results
     
     def get_paths(self, keys: list, paper_title: str):
         """get paths from keys to the paper"""
         key = '|'.join(keys)
         for hops in [1, 2]: # one or two hops only
-            query = self.CYPHER_PATH_KEYS_PAPER.format(key=key, paper_title=paper_title, hops=hops)
-            paths = db.cypher_query(query)[0]
+            query = self.CYPHER_PATH_KEYS_PAPER.format(hops=hops)
+            paths = db.cypher_query(query, {'key': key, 'paper_title': paper_title})[0]
             if paths:
                 break
         new_paths = []
@@ -208,6 +214,5 @@ class GraphDatabase():
 
     def get_one_hops(self, keys: list):
         key = '|'.join(keys)
-        query = self.CYPHER_ONE_HOP.format(key=key)
-        results = db.cypher_query(query)
+        results = db.cypher_query(self.CYPHER_ONE_HOP, {'key': key})
         return results
