@@ -86,7 +86,7 @@ def explanation():
     
     explanations = []
     for paper in papers:
-        explanations.append(gs.explain(processed_keywords, paper.lower(), mode='template'))
+        explanations.append(gs.explain(processed_keywords, paper.lower()))
     return jsonify({'explanations': explanations}), 200
 
 @app.route('/facts')

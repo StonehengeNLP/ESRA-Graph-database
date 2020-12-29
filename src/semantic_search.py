@@ -16,11 +16,12 @@ with open(vocab_path, encoding='utf-8') as f:
     
 if os.path.isfile(vocab_path) and not os.path.isfile(vocab_embeddings_path):
     vocab_embeddings = model_roberta.encode(vocab)
-
+    
+    print('building the vocab embeddings ...')
     with open(vocab_embeddings_path, 'wb') as f:
         pickle.dump(vocab_embeddings, f)
+    print('finished the vocab embeddings ...')
     
-
 with open(vocab_embeddings_path, 'rb') as f:
     vocab_embeddings = pickle.load(f)
 
