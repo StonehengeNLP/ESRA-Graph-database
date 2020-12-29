@@ -6,18 +6,7 @@ from datetime import datetime
 from rank_bm25 import BM25Okapi
 from .graph_database import GraphDatabase
 from .semantic_search import get_related_word
-
-RELATION_TYPE_MAPPING = {
-    'refer_to': 'also known as ',
-    'used_for': 'used for ',
-    'evaluate_for' : 'uses to evaluate ',
-    'hyponym_of': 'is a ',
-    'part_of': 'is a part of ',
-    'feature_of': 'is a feature of ',
-    'compare': 'usually compare with ',
-    'related_to': 'is related to ',
-    'appear_in': 'which is appear in this paper.'
-}
+from .explanation import template
 
 gdb = GraphDatabase()
 
@@ -94,7 +83,6 @@ def text_preprocessing(search_text, threshold=95, flatten=False):
 
     # find other relavant words
     new_keywords = get_related_word(new_keywords)
-    print(new_keywords)
     
     # flatten the keywords in dict format
     if flatten:        
@@ -157,96 +145,9 @@ def _search_popularity(keys, n):
     results = sorted(results, key=lambda x: x[0])[::-1]
     return results[:n]
 
-def explain(keys: list, paper_title, mode='template'):
-    if mode == 'template':
-        return _explain_template(keys, paper_title)
-    # if mode == 'kg2text':
-    #     return _explain_kg2text(keys, paper_title)
+def explain(keys: list, paper_title):
+    return template(keys, paper_title)
 
-def _explain_template(keys, paper_title):
-    paths = gdb.get_paths(keys, paper_title)
-    
-    # calculate sum of weight of each path in order to rank
-    ranking = []
-    for i, path in enumerate(paths):
-        weight = 0
-        for relation in path:
-            if relation[0] == 'refer_to':
-                weight += float('-inf')
-            else:
-                weight += relation[1]
-        ranking.append([weight,i])
-
-    # pick n paths that have most weight
-    MAXIMUM_PATH = 2
-    ranking.sort(reverse=True)
-    if MAXIMUM_PATH > len(paths):
-        MAXIMUM_PATH = len(paths)
-    picked_idx = [ranking[i][1] for i in range(MAXIMUM_PATH)]
-
-    # show explanation
-    out = []
-    for idx in picked_idx:
-        explain_path = paths[idx]
-        explanation = ''
-        for i,relation in enumerate(explain_path):
-            if i == 0:
-                explanation += relation[2][0] + '(' + relation[2][1][0] + ') ' # start node
-            
-            # relation_type_cases
-            explanation += RELATION_TYPE_MAPPING[relation[0]]
-            
-            if i != len(explain_path)-1:
-                explanation += relation[3][0] + '(' + relation[3][1][0] + ') ' # between node
-        
-        out += [explanation]
-    return out
-
-# def _prepare_kg2text(keys: list, paper_title: str):
-#         entities = []
-#         types = []
-#         relations = []
-#         paths = gdb.get_paths(keys, paper_title)
-#         for path in paths:
-#             for r, w, s, e in path:
-#                 if s[0] not in entities and 'Paper' not in s[1]:
-#                     entities += [s[0]]
-#                     t = s[1][0].lower()
-#                     if t == 'abbreviation':
-#                         t = 'method'
-#                     types += [t]
-#                 if e[0] not in entities and 'Paper' not in e[1]:
-#                     entities += [e[0]]
-#                     t = e[1][0].lower()
-#                     if t == 'abbreviation':
-#                         t = 'method'
-#                     types += [t]
-#                 if s[0] in entities and e[0] in entities:
-#                     if r == 'refer_to':
-#                         r = 'hyponym_of'
-#                     rel = [s[0], r.upper().replace('_', '-'), e[0]]
-#                     if rel not in relations:
-#                         relations += [rel]
-#         d = {}
-#         d['title'] = paper_title
-#         d['entities'] = entities
-#         d['types'] = ' '.join([f'<{i}>' for i in types])
-#         d['relations'] = [' -- '.join(rel) for rel in relations]
-#         d['abstract'] = ' '.join([f'<{t}_{i}>' for i, t in enumerate(types)])
-#         d['abstract_og'] = ' '.join(entities)
-#         return d
-
-# # TODO: add the model to this system        
-# def _explain_kg2text(keys: list, paper_title): 
-#     return _prepare_kg2text(keys, paper_title)
-    
-#     if isinstance(paper_title, str):
-#         _prepare_kg2text(keys, paper_title)
-        
-#     elif isinstance(paper_title, list):
-#         for title in paper_title:
-#             _prepare_kg2text(keys, paper_title)
-            
 def get_facts(keys: list):
     fact_list, scheme = gdb.get_one_hops(keys)
     results = [{k:v for k, v in zip(scheme, fact)} for fact in fact_list]

@@ -8,3 +8,5 @@ flask
 numpy
 flask-swagger-ui
 tqdm
+scipy
+sentence-transformers
