@@ -55,7 +55,7 @@ def preprocess():
     if not request.is_json:
         return jsonify({"msg": "Missing JSON in request"}), 400    
     
-    text = request.json.get('text', None)
+    text = request.json.get('text')
     if not text:
         return jsonify({"msg": "Missing 'text' parameter"}), 400
     
@@ -71,8 +71,8 @@ def explanation():
     if not request.is_json:
         return jsonify({"msg": "Missing JSON in request"}), 400    
     
-    keyword = request.json.get('keyword', None)
-    papers = request.json.get('papers', None)
+    keyword = request.json.get('keyword')
+    papers = request.json.get('papers')
     if not keyword:
         return jsonify({"msg": "Missing 'keyword' parameter"}), 400
     if not papers:
@@ -105,6 +105,23 @@ def list_of_facts():
     
     fact_list = gs.get_facts(processed_keywords)
     return {'facts': fact_list}, 200
+
+@app.route('/graph')
+def graph():
+    keyword = request.args.get('keyword')
+    paper_title = request.args.get('paper_title')
+    if not keyword:
+        return jsonify({"msg": "Missing 'keyword' parameter"}), 400
+    if not paper_title:
+        return jsonify({"msg": "Missing 'paper_title' parameter"}), 400
+    
+    try:
+        processed_keywords = gs.text_preprocessing(keyword, flatten=True)
+    except:
+        return jsonify({'msg': 'Database is not available'}), 503
+    
+    graph = gs.query_graph(processed_keywords, paper_title)
+    return {'graph': graph}, 200
     
 if __name__ == '__main__':
     app.run(debug=True)
