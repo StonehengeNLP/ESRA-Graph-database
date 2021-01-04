@@ -1,3 +1,4 @@
+import os
 import re
 import numpy as np
 from neomodel import Q
@@ -10,11 +11,16 @@ from .explanation import template
 
 gdb = GraphDatabase()
 
+# Prepare data
+proj_dir = os.path.dirname(os.path.dirname(__file__))
+vocab_path = os.path.join(proj_dir, 'data/vocab.txt')
+
+with open(vocab_path, encoding='utf-8') as f:
+    vocab = [i.strip() for i in f.readlines()]
+
 def text_autocomplete(text, n=10):
     """suggest top 10 similar keywords based on the given text"""
-    base_entity = gdb.get_entity_model('BaseEntity')
-    nodes = base_entity.nodes.filter(name__istartswith=text.lower())
-    suggested_list = list({node.name.lower() for node in nodes[:100]})
+    suggested_list = list(filter(lambda k: k.startswith(text.lower()), vocab))
     return sorted(suggested_list, key=len)[:n]
 
 def text_correction(text, limit=1000, length_vary=0.2):
