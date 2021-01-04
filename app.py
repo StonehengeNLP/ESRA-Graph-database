@@ -24,8 +24,8 @@ def swagger():
         
     swagger_env = settings.FLASK_ENV
     if swagger_env == 'production':
-        swagger_json['host'] = 'graph-database-manager.herokuapp.com'
-        swagger_json['schemes'] = ['https']
+        swagger_json['host'] = '35.247.162.211'
+        swagger_json['schemes'] = ['http']
 
     return swagger_json
     
@@ -110,7 +110,8 @@ def list_of_facts():
 def graph():
     keyword = request.args.get('keyword')
     paper_title = request.args.get('paper_title')
-    limit = request.args.get('limit', type=int)
+    limit = request.args.get('limit', 30, type=int)
+    
     if not keyword:
         return jsonify({"msg": "Missing 'keyword' parameter"}), 400
     if not paper_title:
@@ -125,4 +126,4 @@ def graph():
     return {'graph': graph}, 200
     
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False, port=80, host='0.0.0.0') 

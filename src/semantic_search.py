@@ -1,29 +1,29 @@
 import os
 import scipy
 import pickle
-from sentence_transformers import SentenceTransformer
+# from sentence_transformers import SentenceTransformer
 
-# Prepare model
-model_roberta = SentenceTransformer('roberta-large-nli-mean-tokens')
+# # Prepare model
+# model_roberta = SentenceTransformer('roberta-large-nli-mean-tokens', device='cpu')
 
-# Prepare data
-view_dir = os.path.dirname(__file__)
-vocab_path = os.path.join(view_dir, '../data/vocab.txt')
-vocab_embeddings_path = os.path.join(view_dir, '../data/vocab_embeddings.pickle')
+# # Prepare data
+# proj_dir = os.path.dirname(os.path.dirname(__file__))
+# vocab_path = os.path.join(proj_dir, 'data/vocab.txt')
+# vocab_embeddings_path = os.path.join(proj_dir, 'data/vocab_embeddings.pickle')
 
-with open(vocab_path, encoding='utf-8') as f:
-    vocab = [i.strip() for i in f.readlines()]
+# with open(vocab_path, encoding='utf-8') as f:
+#     vocab = [i.strip() for i in f.readlines()]
     
-if os.path.isfile(vocab_path) and not os.path.isfile(vocab_embeddings_path):
-    vocab_embeddings = model_roberta.encode(vocab)
+# if os.path.isfile(vocab_path) and not os.path.isfile(vocab_embeddings_path):
     
-    print('building the vocab embeddings ...')
-    with open(vocab_embeddings_path, 'wb') as f:
-        pickle.dump(vocab_embeddings, f)
-    print('finished the vocab embeddings ...')
+#     print('building the vocab embeddings ...')
+#     vocab_embeddings = model_roberta.encode(vocab)
+#     with open(vocab_embeddings_path, 'wb') as f:
+#         pickle.dump(vocab_embeddings, f)
+#     print('finished the vocab embeddings ...')
     
-with open(vocab_embeddings_path, 'rb') as f:
-    vocab_embeddings = pickle.load(f)
+# with open(vocab_embeddings_path, 'rb') as f:
+#     vocab_embeddings = pickle.load(f)
 
 
 def get_related_word(query, threshold=0.9, limit=5):
