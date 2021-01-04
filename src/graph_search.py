@@ -157,9 +157,9 @@ def get_all_vocabs():
     entities = gdb.get_all_entities('BaseEntity')
     return [i.name for i in entities]
 
-def query_graph(keys: list, paper_title):
+def query_graph(keys: list, paper_title, limit=30):
     """
     This function is for visualization in frontend using D3.js
     just a proxy of gdb.query_graph
     """
-    return gdb.query_graph(keys, paper_title)
+    return gdb.query_graph(keys, paper_title, limit)

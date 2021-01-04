@@ -84,7 +84,7 @@ class GraphDatabase():
         MATCH path = (n)-[*..2]-(m)-[k]-(p)
         WHERE type(k) <> 'cite'
         RETURN path
-        LIMIT 30
+        LIMIT $limit
         """
     
     def __init__(self):
@@ -228,14 +228,14 @@ class GraphDatabase():
         results = db.cypher_query(self.CYPHER_ONE_HOP, {'key': key})
         return results
     
-    def query_graph(self, keys: list, paper_title: str):
+    def query_graph(self, keys: list, paper_title: str, limit: int):
         """
         This function is for visualization in frontend using D3.js
         and use only 'CYPHER_D3_QUERY'
         """
         key = '|'.join(keys).lower()
         paper_title = paper_title.lower()
-        paths = db.cypher_query(self.CYPHER_D3_QUERY, {'key': key, 'paper_title': paper_title})[0]
+        paths = db.cypher_query(self.CYPHER_D3_QUERY, {'key': key, 'paper_title': paper_title, 'limit': limit})[0]
     
         new_paths = []
         for path in paths:
@@ -244,10 +244,10 @@ class GraphDatabase():
                 relation_type = j.type
                 start_node = j._start_node._properties['name']
                 start_node_class = list(j._start_node.labels)
-                start_node_class = [label for label in start_node_class if label != 'BaseEntity']
+                start_node_class = [label for label in start_node_class if label != 'BaseEntity'][0]
                 end_node = j._end_node._properties['name']
                 end_node_class = list(j._end_node.labels)
-                end_node_class = [label for label in end_node_class if label != 'BaseEntity']
+                end_node_class = [label for label in end_node_class if label != 'BaseEntity'][0]
                 temp_path.append([relation_type, (start_node, start_node_class), (end_node, end_node_class)])
             new_paths.append(temp_path)
         return new_paths

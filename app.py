@@ -110,6 +110,7 @@ def list_of_facts():
 def graph():
     keyword = request.args.get('keyword')
     paper_title = request.args.get('paper_title')
+    limit = request.args.get('limit', type=int)
     if not keyword:
         return jsonify({"msg": "Missing 'keyword' parameter"}), 400
     if not paper_title:
@@ -120,7 +121,7 @@ def graph():
     except:
         return jsonify({'msg': 'Database is not available'}), 503
     
-    graph = gs.query_graph(processed_keywords, paper_title)
+    graph = gs.query_graph(processed_keywords, paper_title, limit)
     return {'graph': graph}, 200
     
 if __name__ == '__main__':
