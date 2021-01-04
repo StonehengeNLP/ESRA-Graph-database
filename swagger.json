@@ -160,6 +160,42 @@
                     }
                 }
             }
+        },
+        "/graph": {
+            "get": {
+                "tags": [
+                    "Graph Database"
+                ],
+                "summary": "Graph for visualization",
+                "operationId": "graph",
+                "parameters": [
+                    {
+                        "name": "keyword",
+                        "in": "query",
+                        "description": "query keywords",
+                        "required": true,
+                        "example": "bert attention"
+                    },
+                    {
+                        "name": "paper_title",
+                        "in": "query",
+                        "description": "Title of the paper",
+                        "required": true,
+                        "example": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "400": {
+                        "description": "Missing parameter"
+                    },
+                    "503": {
+                        "description": "Service unavailable"
+                    }
+                }
+            }
         }
     },
     "securitySchemes": {

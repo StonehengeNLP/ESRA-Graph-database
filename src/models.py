@@ -8,6 +8,7 @@ class BaseRelation(neomodel.StructuredRel):
     weight = neomodel.FloatProperty(default=0)
     create_at = neomodel.DateTimeFormatProperty(format=DATETIME_FORMAT, default_now=True)
     flag_violation = neomodel.BooleanProperty(default=False)
+    from_papers = neomodel.ArrayProperty()
     
 class HyponymOf(BaseRelation):
     pass
