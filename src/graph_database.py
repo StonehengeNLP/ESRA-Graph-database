@@ -86,6 +86,12 @@ class GraphDatabase():
         RETURN path
         LIMIT $limit
         """
+    CYPHER_LOCAL_GRAPH = \
+        """
+        MATCH (n:Paper)-[r:appear_in]- (m)
+        WHERE n.name =~ $paper_title
+        RETURN n, r, m;
+        """
     
     def __init__(self):
         username = settings.NEO4J_USERNAME
@@ -252,3 +258,10 @@ class GraphDatabase():
             new_paths.append(temp_path)
         return new_paths
         
+    def query_local_graph(self, paper_title: str):
+        """
+        For querying local graph - a part of explanation
+        """
+        paper_title = paper_title.lower()
+        paths = db.cypher_query(self.CYPHER_LOCAL_GRAPH, {'paper_title': paper_title})[0]
+        return paths
