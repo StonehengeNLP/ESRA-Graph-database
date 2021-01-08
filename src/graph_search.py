@@ -151,9 +151,6 @@ def _search_popularity(keys, n):
     results = sorted(results, key=lambda x: x[0])[::-1]
     return results[:n]
 
-def explain(keys: list, paper_title):
-    return template(keys, paper_title)
-
 def get_facts(keys: list):
     fact_list, scheme = gdb.get_one_hops(keys)
     results = [{k:v for k, v in zip(scheme, fact)} for fact in fact_list]

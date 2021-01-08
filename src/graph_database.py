@@ -51,15 +51,14 @@ class GraphDatabase():
         """
     CYPHER_CHECK_NODE_EXIST = "MATCH (n) WHERE n.name =~ $key RETURN count(n);"
     CYPHER_PATH_KEYS_PAPER = \
-        """
-            MATCH (n)
-            WHERE n.name =~ $key
-            MATCH (m)
+        """ MATCH (m)
             WHERE m.name =~ $paper_title
-            MATCH path = (n)-[*..{hops}]-(m)
-            WITH *, relationships(path) AS r
-            WHERE type(r[-1]) = "appear_in"
-            RETURN  path
+            MATCH path1 = (x)-[r1:appear_in]->(m)
+            WITH COLLECT(x.name) + COLLECT(m.name) as local_nodes, m
+            MATCH path2 = (n)-[*..{hops}]-(m)
+            WHERE n.name =~ $key
+                AND ALL(node in nodes(path2) WHERE node.name in local_nodes)
+            RETURN DISTINCT path2
         """
     CYPHER_ONE_HOP = \
         """
@@ -85,18 +84,6 @@ class GraphDatabase():
         WHERE type(k) <> 'cite'
         RETURN path
         LIMIT $limit
-        """
-    CYPHER_LOCAL_GRAPH_1 = \
-        """
-        MATCH (n:Paper)-[r:appear_in]- (m)
-        WHERE n.name =~ $paper_title
-        RETURN n, r, m;
-        """
-    CYPHER_LOCAL_GRAPH_2 = \
-        """
-        MATCH (n)-[r1]->(m)-[r2:appear_in]- (o:Paper)
-        WHERE o.name =~ $paper_title AND NOT n:Paper AND NOT n:Author AND NOT m:Paper AND NOT m:Author
-        RETURN n, r1, m, r2, o;
         """
     
     def __init__(self):
@@ -211,14 +198,23 @@ class GraphDatabase():
         results = db.cypher_query(self.CYPHER_PAGE_RANK, {'key': key, 'graph_name': graph_name})[0]
         return results
     
-    def get_paths(self, keys: list, paper_title: str):
-        """get paths from keys to the paper"""
+    def get_paths(self, keys: list, paper_title: str, local=True, max_hops=3):
+        """
+        Retrieve paths from given keys to target paper
+        use only CYPHER_PATH_KEYS_PAPER
+        
+        :param keys: list of preprocessed keys
+        :param paper_title: the title name of target paper
+        :param local: all retrieved entities will be from the paper (local graph)
+        :param max_hops: maximum number of hops will be returned
+        
+        :return: path from keys to paper_title
+        """
         key = '|'.join(keys)
-        for hops in [1, 2]: # one or two hops only
-            query = self.CYPHER_PATH_KEYS_PAPER.format(hops=hops)
-            paths = db.cypher_query(query, {'key': key, 'paper_title': paper_title})[0]
-            if paths:
-                break
+ 
+        query = self.CYPHER_PATH_KEYS_PAPER.format(hops=max_hops)
+        paths = db.cypher_query(query, {'key': key, 'paper_title': paper_title})[0]
+
         new_paths = []
         for path in paths:
             temp_path = []
@@ -264,47 +260,3 @@ class GraphDatabase():
             new_paths.append(temp_path)
         return new_paths
         
-    def query_local_graph(self, paper_title: str):
-        """
-        For querying local graph - a part of explanation
-        """
-        paper_title = paper_title.lower()
-        new_paths = []
-        start_node_list = []
-
-        #only local entity with appear_in
-        paths = db.cypher_query(self.CYPHER_LOCAL_GRAPH_1, {'paper_title': paper_title})[0]
-        for path in paths:
-            temp_path = []
-            j = path[1]
-            relation_type = j.type
-            start_node = j._start_node._properties['name']
-            start_node_list.append(j._start_node._id)
-            start_node_class = list(j._start_node.labels)
-            start_node_class = [label for label in start_node_class if label != 'BaseEntity'][0]
-            end_node = j._end_node._properties['name']
-            end_node_class = list(j._end_node.labels)
-            end_node_class = [label for label in end_node_class if label != 'BaseEntity'][0]
-            temp_path.append([relation_type, (start_node, start_node_class), (end_node, end_node_class)])
-            new_paths.append(temp_path)
-
-        #local relationship
-        paths = db.cypher_query(self.CYPHER_LOCAL_GRAPH_2, {'paper_title': paper_title})[0]
-        for path in paths:
-            relations = path[1],path[3]
-            temp_path = []
-            for j in relations:
-                relation_type = j.type
-                start_node = j._start_node._properties['name']
-                if j._start_node._id not in start_node_list:
-                    break
-                start_node_class = list(j._start_node.labels)
-                start_node_class = [label for label in start_node_class if label != 'BaseEntity'][0]
-                end_node = j._end_node._properties['name']
-                end_node_class = list(j._end_node.labels)
-                end_node_class = [label for label in end_node_class if label != 'BaseEntity'][0]
-                temp_path.append([relation_type, (start_node, start_node_class), (end_node, end_node_class)])
-            if len(temp_path) == 0:
-                continue
-            new_paths.append(temp_path)
-        return new_paths

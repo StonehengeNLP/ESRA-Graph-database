@@ -21,8 +21,8 @@ def template(keys, paper_title):
     """
     template for generating explanation
     """
-    graph = gdb.query_local_graph(paper_title)
-    pass
+    graph = gdb.get_paths(keys, paper_title)
+    return graph
 
 # NOTE: old version
 # def template(keys, paper_title):
