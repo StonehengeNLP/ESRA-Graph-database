@@ -108,21 +108,21 @@ def list_of_facts():
 
 @app.route('/graph')
 def graph():
-    keyword = request.args.get('keyword')
+    # keyword = request.args.get('keyword')
     paper_title = request.args.get('paper_title')
     limit = request.args.get('limit', 30, type=int)
     
-    if not keyword:
-        return jsonify({"msg": "Missing 'keyword' parameter"}), 400
+    # if not keyword:
+    #     return jsonify({"msg": "Missing 'keyword' parameter"}), 400
     if not paper_title:
         return jsonify({"msg": "Missing 'paper_title' parameter"}), 400
     
-    try:
-        processed_keywords = gs.text_preprocessing(keyword, flatten=True)
-    except:
-        return jsonify({'msg': 'Database is not available'}), 503
+    # try:
+    #     processed_keywords = gs.text_preprocessing(keyword, flatten=True)
+    # except:
+    #     return jsonify({'msg': 'Database is not available'}), 503
     
-    graph = gs.query_graph(processed_keywords, paper_title, limit)
+    graph = gs.query_graph(paper_title=paper_title, limit=limit)
     return {'graph': graph}, 200
     
 if __name__ == '__main__':

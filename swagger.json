@@ -170,13 +170,6 @@
                 "operationId": "graph",
                 "parameters": [
                     {
-                        "name": "keyword",
-                        "in": "query",
-                        "description": "query keywords",
-                        "required": true,
-                        "example": "bert attention"
-                    },
-                    {
                         "name": "paper_title",
                         "in": "query",
                         "description": "Title of the paper",
