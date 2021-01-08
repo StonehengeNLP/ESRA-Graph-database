@@ -86,17 +86,20 @@ class GraphDatabase():
         RETURN path
         LIMIT $limit
         """
-    CYPHER_LOCAL_GRAPH_1 = \
+    CYPHER_LOCAL_GRAPH_ENTITY = \
         """
         MATCH (n:Paper)-[r:appear_in]- (m)
         WHERE n.name =~ $paper_title
         RETURN n, r, m;
         """
-    CYPHER_LOCAL_GRAPH_2 = \
+    CYPHER_LOCAL_GRAPH_RELATION = \
         """
-        MATCH (n)-[r1]->(m)-[r2:appear_in]- (o:Paper)
-        WHERE o.name =~ $paper_title AND NOT n:Paper AND NOT n:Author AND NOT m:Paper AND NOT m:Author
-        RETURN n, r1, m, r2, o;
+        MATCH (p:Paper)
+        WHERE p.name =~ $paper_title
+        MATCH (p)-[r:appear_in]-(m)
+        MATCH (p)-[t:appear_in]-(n)
+        MATCH (m)<-[k]-(n)
+        RETURN DISTINCT n, r, m, k, p;
         """
     
     def __init__(self):
@@ -270,16 +273,14 @@ class GraphDatabase():
         """
         paper_title = paper_title.lower()
         new_paths = []
-        start_node_list = []
 
         #only local entity with appear_in
-        paths = db.cypher_query(self.CYPHER_LOCAL_GRAPH_1, {'paper_title': paper_title})[0]
+        paths = db.cypher_query(self.CYPHER_LOCAL_GRAPH_ENTITY, {'paper_title': paper_title})[0]
         for path in paths:
             temp_path = []
             j = path[1]
             relation_type = j.type
             start_node = j._start_node._properties['name']
-            start_node_list.append(j._start_node._id)
             start_node_class = list(j._start_node.labels)
             start_node_class = [label for label in start_node_class if label != 'BaseEntity'][0]
             end_node = j._end_node._properties['name']
@@ -289,15 +290,13 @@ class GraphDatabase():
             new_paths.append(temp_path)
 
         #local relationship
-        paths = db.cypher_query(self.CYPHER_LOCAL_GRAPH_2, {'paper_title': paper_title})[0]
+        paths = db.cypher_query(self.CYPHER_LOCAL_GRAPH_RELATION, {'paper_title': paper_title})[0]
         for path in paths:
             relations = path[1],path[3]
             temp_path = []
             for j in relations:
                 relation_type = j.type
                 start_node = j._start_node._properties['name']
-                if j._start_node._id not in start_node_list:
-                    break
                 start_node_class = list(j._start_node.labels)
                 start_node_class = [label for label in start_node_class if label != 'BaseEntity'][0]
                 end_node = j._end_node._properties['name']
@@ -306,5 +305,5 @@ class GraphDatabase():
                 temp_path.append([relation_type, (start_node, start_node_class), (end_node, end_node_class)])
             if len(temp_path) == 0:
                 continue
-            new_paths.append(temp_path)
+            new_paths.append(temp_path[::-1])
         return new_paths

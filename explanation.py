@@ -21,8 +21,38 @@ def template(keys, paper_title):
     """
     template for generating explanation
     """
-    graph = gdb.query_local_graph(paper_title)
-    return graph
+    tasks = []
+    methods = []
+    others = []
+    local_graph = gdb.query_local_graph(paper_title)
+    for path in local_graph:
+        if len(path) == 1: #entity in graph
+            entity_name, entity_type = path[0][1]
+            if entity_type  == 'Task':
+                tasks.append(entity_name)
+            elif entity_type == 'Method':
+                methods.append(entity_name)
+            else:
+                others.append(f"{entity_name}({entity_type})")
+
+        #TODO: use local relations to enchance the explanation.  
+        if len(path) == 2: #relation in local graph
+            pass
+
+    if len(tasks) == 0 and len(methods) > 0:
+        explanation = f"This paper using {str(len(methods))} {'methods' if len(methods) > 1 else 'method'} " + \
+                      f"which are {', '.join([str(method) for method in methods])}."
+    elif len(tasks) > 0 and len(methods) == 0:
+        explanation = f"This paper doing {str(len(tasks))} {'tasks' if len(tasks) > 1 else 'task'} " + \
+                      f"which are {', '.join([str(task) for task in tasks])}."
+    elif len(tasks) > 0 and len(methods) > 0:
+        explanation = f"This paper doing {str(len(tasks))} {'tasks' if len(tasks) > 1 else 'task'} " + \
+                      f"which are {', '.join([str(task) for task in tasks])} and using {str(len(methods))} {'methods' if len(methods) > 1 else 'method'} " + \
+                      f"which are {', '.join([str(method) for method in methods])}."
+    else:
+        explanation = f"This paper mentioned {', '.join([str(other) for other in others])}."
+
+    return explanation
 
 paper_title = "A Neural Attention Model for Abstractive Sentence Summarization"
 keys = []
