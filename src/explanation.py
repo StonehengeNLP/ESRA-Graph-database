@@ -1,65 +1,44 @@
+import nltk
+from nltk.tokenize import sent_tokenize 
+
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    nltk.download('punkt')
+  
+import re
+import torch
+from transformers import pipeline
 from .graph_database import GraphDatabase
 
 
 gdb = GraphDatabase()
+device = 0 if torch.cuda.is_available() else -1
+bart_base = pipeline("summarization", model='t5-small', device=device)
 
-RELATION_TYPE_MAPPING = {
-    'refer_to': 'also known as ',
-    'used_for': 'used for ',
-    'evaluate_for' : 'uses to evaluate ',
-    'hyponym_of': 'is a ',
-    'part_of': 'is a part of ',
-    'feature_of': 'is a feature of ',
-    'compare': 'usually compare with ',
-    'related_to': 'is related to ',
-    'appear_in': 'which is appear in this paper.'
-}
+def is_include_word(word, text):
+    return re.search(r'\b{}\b'.format(word), text, flags=re.IGNORECASE)
 
-
-# NOTE: new version
-def template(keys, paper_title):
+def filtered_summarization(keys, title, abstract):
     """
-    template for generating explanation
+    This explanation method is to filter some sentences that include keyword(s)
+    and then throw it into summarization model (we use t5-small in this case)
+    so, we will get our explanation that based on entities in the path from keywords to paper
+    Although it looks like summarization, it is also explanation of the local graph as well.
     """
-    graph = gdb.get_paths(keys, paper_title)
-    return graph
-
-# NOTE: old version
-# def template(keys, paper_title):
-#     paths = gdb.get_paths(keys, paper_title)
     
-#     # calculate sum of weight of each path in order to rank
-#     ranking = []
-#     for i, path in enumerate(paths):
-#         weight = 0
-#         for relation in path:
-#             if relation[0] == 'refer_to':
-#                 weight += float('-inf')
-#             else:
-#                 weight += relation[1]
-#         ranking.append([weight,i])
-
-#     # pick n paths that have most weight
-#     MAXIMUM_PATH = 2
-#     ranking.sort(reverse=True)
-#     if MAXIMUM_PATH > len(paths):
-#         MAXIMUM_PATH = len(paths)
-#     picked_idx = [ranking[i][1] for i in range(MAXIMUM_PATH)]
-
-#     # show explanation
-#     out = []
-#     for idx in picked_idx:
-#         explain_path = paths[idx]
-#         explanation = ''
-#         for i,relation in enumerate(explain_path):
-#             if i == 0:
-#                 explanation += relation[2][0] + '(' + relation[2][1][0] + ') ' # start node
+    nodes = gdb.get_related_nodes(keys, title)
+    
+    sentences = sent_tokenize(abstract)
+    
+    selected_sentence = []
+    for sentence in sentences:
+        for name in nodes + keys:
+            if is_include_word(name, sentence):
+                selected_sentence += [sentence]
+                break
             
-#             # relation_type_cases
-#             explanation += RELATION_TYPE_MAPPING[relation[0]]
-            
-#             if i != len(explain_path)-1:
-#                 explanation += relation[3][0] + '(' + relation[3][1][0] + ') ' # between node
-        
-#         out += [explanation]
-#     return out
+    new_sentence = ' '.join(selected_sentence)
+    summ = bart_base(new_sentence, max_length=100, min_length=50)[0]['summary_text']
+
+    return summ

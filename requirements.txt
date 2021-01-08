@@ -10,3 +10,6 @@ flask-swagger-ui
 tqdm
 scipy
 sentence-transformers
+nltk
+transformers
+sentencepiece

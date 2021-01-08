@@ -60,6 +60,19 @@ class GraphDatabase():
                 AND ALL(node in nodes(path2) WHERE node.name in local_nodes)
             RETURN DISTINCT path2
         """
+    CYPHER_NODES_KEYS_PAPER = \
+        """ MATCH (m)
+            WHERE m.name =~ $paper_title
+            MATCH path1 = (x)-[r1:appear_in]->(m)
+            WITH COLLECT(x.name) + COLLECT(m.name) as local_nodes, m
+            MATCH path2 = (n)-[*..{hops}]-(m)
+            WHERE n.name =~ $key
+                AND ALL(node in nodes(path2) WHERE node.name in local_nodes)
+            MATCH (q)
+            WHERE q IN nodes(path2)
+            WITH COLLECT(DISTINCT q.name) as out
+            RETURN out
+        """
     CYPHER_ONE_HOP = \
         """
             MATCH (n)-[e]-(m)
@@ -260,3 +273,12 @@ class GraphDatabase():
             new_paths.append(temp_path)
         return new_paths
         
+    def get_related_nodes(self, keys: list, paper_title: str, max_hops=3):
+        """
+        This function is for querying nodes and send it to summarization
+        """
+        key = '|'.join(keys)
+ 
+        query = self.CYPHER_NODES_KEYS_PAPER.format(hops=max_hops)
+        nodes = db.cypher_query(query, {'key': key, 'paper_title': paper_title})
+        return nodes[0][0][0]

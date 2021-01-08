@@ -7,7 +7,6 @@ from datetime import datetime
 from rank_bm25 import BM25Okapi
 from .graph_database import GraphDatabase
 from .semantic_search import get_related_word
-from .explanation import template
 
 gdb = GraphDatabase()
 
