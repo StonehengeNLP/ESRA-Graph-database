@@ -1,6 +1,7 @@
 import json
 from src import settings
 from src import graph_search as gs
+from src import explanation
 from flask import Flask, jsonify, request
 from flask_swagger_ui import get_swaggerui_blueprint
 
@@ -73,10 +74,13 @@ def explanation():
     
     keyword = request.json.get('keyword')
     papers = request.json.get('papers')
+    abstracts = request.json.get('abstracts')
     if not keyword:
         return jsonify({"msg": "Missing 'keyword' parameter"}), 400
     if not papers:
-        return jsonify({"msg": "Missing 'paperIds' parameter"}), 400
+        return jsonify({"msg": "Missing 'papers' parameter"}), 400
+    if not abstracts:
+        return jsonify({"msg": "Missing 'abstracts' parameter"}), 400
     
     try:
         processed_keywords = gs.text_preprocessing(keyword, flatten=True)
@@ -85,8 +89,8 @@ def explanation():
         return jsonify({'msg': 'Database is not available'}), 503
     
     explanations = []
-    for paper in papers:
-        explanations.append(gs.explain(processed_keywords, paper.lower()))
+    for paper, abstract in zip(papers, abstracts):
+        explanations.append(explanation.filtered_summarization(processed_keywords, paper.lower(), abstract))
     return jsonify({'explanations': explanations}), 200
 
 @app.route('/facts')
@@ -108,19 +112,11 @@ def list_of_facts():
 
 @app.route('/graph')
 def graph():
-    # keyword = request.args.get('keyword')
     paper_title = request.args.get('paper_title')
     limit = request.args.get('limit', 30, type=int)
     
-    # if not keyword:
-    #     return jsonify({"msg": "Missing 'keyword' parameter"}), 400
     if not paper_title:
         return jsonify({"msg": "Missing 'paper_title' parameter"}), 400
-    
-    # try:
-    #     processed_keywords = gs.text_preprocessing(keyword, flatten=True)
-    # except:
-    #     return jsonify({'msg': 'Database is not available'}), 503
     
     graph = gs.query_graph(paper_title=paper_title, limit=limit)
     return {'graph': graph}, 200
