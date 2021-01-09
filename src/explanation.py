@@ -8,13 +8,18 @@ except LookupError:
   
 import re
 import torch
+import language_tool_python
 from transformers import pipeline
 from .graph_database import GraphDatabase
 
 
 gdb = GraphDatabase()
+
 device = 0 if torch.cuda.is_available() else -1
 bart_base = pipeline("summarization", model='t5-small', device=device)
+
+tool = language_tool_python.LanguageTool('en-US')
+
 
 def is_include_word(word, text):
     return re.search(r'\b{}\b'.format(word), text, flags=re.IGNORECASE)
@@ -41,4 +46,4 @@ def filtered_summarization(keys, title, abstract):
     new_sentence = ' '.join(selected_sentence)
     summ = bart_base(new_sentence, max_length=100, min_length=50)[0]['summary_text']
 
-    return summ
+    return tool.correct(summ)

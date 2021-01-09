@@ -1,7 +1,7 @@
 import json
 from src import settings
 from src import graph_search as gs
-from src import explanation
+from src import explanation as ex
 from flask import Flask, jsonify, request
 from flask_swagger_ui import get_swaggerui_blueprint
 
@@ -90,7 +90,7 @@ def explanation():
     
     explanations = []
     for paper, abstract in zip(papers, abstracts):
-        explanations.append(explanation.filtered_summarization(processed_keywords, paper.lower(), abstract))
+        explanations.append(ex.filtered_summarization(processed_keywords, paper.lower(), abstract))
     return jsonify({'explanations': explanations}), 200
 
 @app.route('/facts')
@@ -122,4 +122,5 @@ def graph():
     return {'graph': graph}, 200
     
 if __name__ == '__main__':
+    # app.run(debug=True) 
     app.run(debug=False, port=80, host='0.0.0.0') 
