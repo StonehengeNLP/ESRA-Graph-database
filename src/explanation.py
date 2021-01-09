@@ -8,7 +8,7 @@ except LookupError:
   
 import re
 import torch
-import language_tool_python
+# import language_tool_python
 from transformers import pipeline
 from .graph_database import GraphDatabase
 
@@ -16,9 +16,9 @@ from .graph_database import GraphDatabase
 gdb = GraphDatabase()
 
 device = 0 if torch.cuda.is_available() else -1
-bart_base = pipeline("summarization", model='t5-small', device=device)
+t5_ = pipeline("summarization", model='t5-small', device=device)
 
-tool = language_tool_python.LanguageTool('en-US')
+# tool = language_tool_python.LanguageTool('en-US')
 
 
 def is_include_word(word, text):
@@ -35,6 +35,19 @@ def count_word(text):
     return number of English word exists in the given text 
     """
     return len(re.findall('\w+', text))
+
+def beautify(text):
+    """
+    manually beautify t5 output because the spell checker edit our specific name
+    return English text in a more beautiful format by following
+        1 uppercase first letter of each sentence
+        2 remove space in front of full stop
+    """
+    callback = lambda x: x.group(1).upper()
+    text = re.sub(r'^(\w)', callback, text)
+    text = re.sub(r' (\. \w)', callback, text)
+    text = re.sub(r' \.', '.', text)
+    return text
 
 def filtered_summarization(keys, title, abstract):
     """
@@ -57,11 +70,18 @@ def filtered_summarization(keys, title, abstract):
             
     new_sentence = ' '.join(selected_sentence)
     word_count = count_word(new_sentence)
+    # print(new_sentence)
 
     if word_count > 10:
         min_length = min(50, word_count)
-        summ = bart_base(new_sentence, max_length=70, min_length=min_length)[0]['summary_text']
-        summ = tool.correct(summ)
+        summ = t5_(new_sentence, max_length=100, min_length=min_length)[0]['summary_text']
+        
+        summ = beautify(summ)
+        
+        # NOTE: 
+        # the language_tool_python modify 'XLNet' to 'Let'
+        # So, we are no longer use this
+        # summ = tool.correct(summ)
     else:
         summ = ''
         
