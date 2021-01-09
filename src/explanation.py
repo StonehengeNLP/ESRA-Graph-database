@@ -22,7 +22,19 @@ tool = language_tool_python.LanguageTool('en-US')
 
 
 def is_include_word(word, text):
-    return re.search(r'\b{}\b'.format(word), text, flags=re.IGNORECASE)
+    """ 
+    return true if the word is included in the text
+    
+    I have handled plural cases by adding just 's' and 'es'
+    you could make it smarter :D
+    """
+    return re.search(r'\b{}(s|es){{0,1}}\b'.format(word), text, flags=re.IGNORECASE)
+
+def count_word(text):
+    """
+    return number of English word exists in the given text 
+    """
+    return len(re.findall('\w+', text))
 
 def filtered_summarization(keys, title, abstract):
     """
@@ -44,6 +56,14 @@ def filtered_summarization(keys, title, abstract):
                 break
             
     new_sentence = ' '.join(selected_sentence)
-    summ = bart_base(new_sentence, max_length=100, min_length=50)[0]['summary_text']
+    word_count = count_word(new_sentence)
+    print(new_sentence)
 
-    return tool.correct(summ)
+    if word_count > 10:
+        min_length = min(50, word_count)
+        summ = bart_base(new_sentence, max_length=70, min_length=min_length)[0]['summary_text']
+        summ = tool.correct(summ)
+    else:
+        summ = ''
+        
+    return summ
