@@ -57,7 +57,6 @@ def filtered_summarization(keys, title, abstract):
             
     new_sentence = ' '.join(selected_sentence)
     word_count = count_word(new_sentence)
-    print(new_sentence)
 
     if word_count > 10:
         min_length = min(50, word_count)
