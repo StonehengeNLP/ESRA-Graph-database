@@ -13,5 +13,4 @@ sentence-transformers
 nltk
 transformers
 sentencepiece
-language_tool_python
 python-Levenshtein
