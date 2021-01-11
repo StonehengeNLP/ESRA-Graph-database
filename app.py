@@ -47,7 +47,7 @@ def complete():
         except:
             return jsonify({'msg': 'Database is not available'}), 503
         if out:
-            out = [' '.join(word.split()) for word in out]
+            out = [' '.join(tokenized_text[:i] + word.split()) for word in out]
             break
     return jsonify({'sentences': out}), 200
 
