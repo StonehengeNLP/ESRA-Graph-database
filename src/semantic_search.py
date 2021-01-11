@@ -37,8 +37,8 @@ def get_related_word(query, threshold=0.9, limit=5):
         dict of keywords and their list of related keywords
     """
     if isinstance(query, str):
-        queries = [query]
-    elif isinstance(query, list):
+        queries = (query,)
+    elif isinstance(query, tuple):
         queries = query
         
     query_embeddings = model_roberta.encode(queries)

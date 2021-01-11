@@ -91,7 +91,7 @@ def text_preprocessing(search_text, threshold=95, flatten=False):
     new_keywords = _drop_insignificant_words(new_keywords)
 
     # find other relavant words
-    new_keywords = get_related_word(new_keywords)
+    new_keywords = get_related_word(tuple(new_keywords))
     
     # flatten the keywords in dict format
     if flatten:        
