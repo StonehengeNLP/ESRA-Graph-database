@@ -1,6 +1,7 @@
 import os
 import scipy
 import pickle
+from functools import lru_cache
 from sentence_transformers import SentenceTransformer
 
 # Prepare model
@@ -25,7 +26,7 @@ if os.path.isfile(vocab_path) and not os.path.isfile(vocab_embeddings_path):
 with open(vocab_embeddings_path, 'rb') as f:
     vocab_embeddings = pickle.load(f)
 
-
+@lru_cache(maxsize=128)
 def get_related_word(query, threshold=0.9, limit=5):
     """
     Semantic search function

@@ -8,7 +8,7 @@ except LookupError:
   
 import re
 import torch
-# import language_tool_python
+from functools import lru_cache
 from transformers import pipeline
 from .graph_database import GraphDatabase
 
@@ -16,9 +16,7 @@ from .graph_database import GraphDatabase
 gdb = GraphDatabase()
 
 device = 0 if torch.cuda.is_available() else -1
-t5_ = pipeline("summarization", model='t5-small', device=device)
-
-# tool = language_tool_python.LanguageTool('en-US')
+t5_small = pipeline("summarization", model='t5-small', device=device)
 
 
 def is_include_word(word, text):
@@ -49,6 +47,15 @@ def beautify(text):
     text = re.sub(r' \.', '.', text)
     return text
 
+@lru_cache(maxsize=128)
+def _summarize(sentence, max_length, min_length):
+    """
+    this function is for summarizing sentences
+    """
+    summ = t5_small(sentence, max_length=100, min_length=min_length)[0]['summary_text']
+    summ = beautify(summ)
+    return summ
+
 def filtered_summarization(keys, title, abstract):
     """
     This explanation method is to filter some sentences that include keyword(s)
@@ -74,14 +81,8 @@ def filtered_summarization(keys, title, abstract):
 
     if word_count > 10:
         min_length = min(50, word_count)
-        summ = t5_(new_sentence, max_length=100, min_length=min_length)[0]['summary_text']
+        summ = _summarize(new_sentence, max_length=100, min_length=min_length)
         
-        summ = beautify(summ)
-        
-        # NOTE: 
-        # the language_tool_python modify 'XLNet' to 'Let'
-        # So, we are no longer use this
-        # summ = tool.correct(summ)
     else:
         summ = ''
         

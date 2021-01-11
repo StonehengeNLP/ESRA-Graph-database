@@ -4,6 +4,7 @@ import numpy as np
 from neomodel import Q
 from fuzzywuzzy import fuzz
 from datetime import datetime
+from functools import lru_cache
 from rank_bm25 import BM25Okapi
 from .graph_database import GraphDatabase
 from .semantic_search import get_related_word
@@ -17,11 +18,13 @@ vocab_path = os.path.join(proj_dir, 'data/vocab.txt')
 with open(vocab_path, encoding='utf-8') as f:
     vocab = [i.strip() for i in f.readlines()]
 
+@lru_cache(maxsize=128)
 def text_autocomplete(text, n=10):
     """suggest top 10 similar keywords based on the given text"""
     suggested_list = list(filter(lambda k: k.startswith(text.lower()), vocab))
     return sorted(suggested_list, key=len)[:n]
 
+@lru_cache(maxsize=128)
 def text_correction(text, limit=1000, length_vary=0.2):
     """correct the text to be matched to a node"""
     text = text.lower()
@@ -62,6 +65,7 @@ def _drop_insignificant_words(keywords: list):
             d[keyword] = c
     return list(d.keys())
 
+@lru_cache(maxsize=128)
 def text_preprocessing(search_text, threshold=95, flatten=False):
     """correct and filter n-gram keywords by similarity threshold"""
     search_text = search_text.lower()
@@ -98,70 +102,68 @@ def text_preprocessing(search_text, threshold=95, flatten=False):
 
     return new_keywords
 
-# TODO: prevent injection
-def search(keys: list, n=10, mode='pagerank'):
-    """return ranked papers from subgraph from those keywords using pagerank"""
-    if mode == 'pagerank':
-        results = _search_pagerank(keys, n)
-    elif mode == 'bm25':
-        results = _search_bm25(keys, n)
-    elif mode == 'popularity':
-        results = _search_popularity(keys, n)
-    return results
-    
-def _search_pagerank(keys, n):
-    for key in keys:
-        if not gdb.is_node_exist(key):
-            return ["Entity does not exist"]
-    if not gdb.is_cypher_graph_exist(keys):
-        gdb.create_cypher_graph(keys)
-    results = gdb.pagerank(keys)
-    gdb.delete_cypher_graph(keys)
-    return results[:n]
-
-def _search_bm25(keys, n):
-    papers = gdb.get_all_entities('Paper')
-    corpus = [p.abstract.lower() for p in papers]
-    tokenized_corpus = [doc.split() for doc in corpus]
-    bm25 = BM25Okapi(tokenized_corpus)
-    doc_scores = bm25.get_scores(keys)
-    ind = np.argpartition(doc_scores, -10)[-n:]
-    res_ind = ind[np.argsort(doc_scores[ind])][::-1]
-    results = []
-    for i in res_ind:
-        score = doc_scores[i]
-        paper = papers[i]
-        results += [[score, paper.cc, paper.name]]
-    return results
-
-# NOTE: now this is only title
-def _search_popularity(keys, n):
-    results = []
-    papers = gdb.get_all_entities('Paper')
-    for p in papers:
-        days = (datetime.now() - p.created).days
-        cc = p.cc
-        popular = cc / days
-        count = 0
-        for key in keys:
-            if key in p.name.lower() or key in p.abstract.lower():
-                count += 1
-        results += [[popular * count, p.cc, p.name]]
-    results = sorted(results, key=lambda x: x[0])[::-1]
-    return results[:n]
-
+@lru_cache(maxsize=32)
 def get_facts(keys: list):
     fact_list, scheme = gdb.get_one_hops(keys)
     results = [{k:v for k, v in zip(scheme, fact)} for fact in fact_list]
     return results
 
-def get_all_vocabs():
-    entities = gdb.get_all_entities('BaseEntity')
-    return [i.name for i in entities]
-
+@lru_cache(maxsize=128)
 def query_graph(paper_title, limit):
     """
     This function is for visualization in frontend using D3.js
     just a proxy of gdb.query_graph
     """
     return gdb.query_graph(paper_title, limit)
+
+# # TODO: prevent injection
+# def search(keys: list, n=10, mode='pagerank'):
+#     """return ranked papers from subgraph from those keywords using pagerank"""
+#     if mode == 'pagerank':
+#         results = _search_pagerank(keys, n)
+#     elif mode == 'bm25':
+#         results = _search_bm25(keys, n)
+#     elif mode == 'popularity':
+#         results = _search_popularity(keys, n)
+#     return results
+    
+# def _search_pagerank(keys, n):
+#     for key in keys:
+#         if not gdb.is_node_exist(key):
+#             return ["Entity does not exist"]
+#     if not gdb.is_cypher_graph_exist(keys):
+#         gdb.create_cypher_graph(keys)
+#     results = gdb.pagerank(keys)
+#     gdb.delete_cypher_graph(keys)
+#     return results[:n]
+
+# def _search_bm25(keys, n):
+#     papers = gdb.get_all_entities('Paper')
+#     corpus = [p.abstract.lower() for p in papers]
+#     tokenized_corpus = [doc.split() for doc in corpus]
+#     bm25 = BM25Okapi(tokenized_corpus)
+#     doc_scores = bm25.get_scores(keys)
+#     ind = np.argpartition(doc_scores, -10)[-n:]
+#     res_ind = ind[np.argsort(doc_scores[ind])][::-1]
+#     results = []
+#     for i in res_ind:
+#         score = doc_scores[i]
+#         paper = papers[i]
+#         results += [[score, paper.cc, paper.name]]
+#     return results
+
+# # NOTE: now this is only title
+# def _search_popularity(keys, n):
+#     results = []
+#     papers = gdb.get_all_entities('Paper')
+#     for p in papers:
+#         days = (datetime.now() - p.created).days
+#         cc = p.cc
+#         popular = cc / days
+#         count = 0
+#         for key in keys:
+#             if key in p.name.lower() or key in p.abstract.lower():
+#                 count += 1
+#         results += [[popular * count, p.cc, p.name]]
+#     results = sorted(results, key=lambda x: x[0])[::-1]
+#     return results[:n]
