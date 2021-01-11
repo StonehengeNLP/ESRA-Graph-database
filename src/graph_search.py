@@ -17,6 +17,7 @@ vocab_path = os.path.join(proj_dir, 'data/vocab.txt')
 
 with open(vocab_path, encoding='utf-8') as f:
     vocab = [i.strip() for i in f.readlines()]
+vocab_set = set(vocab)
 
 @lru_cache(maxsize=128)
 def text_autocomplete(text, n=10):
@@ -26,8 +27,15 @@ def text_autocomplete(text, n=10):
 
 @lru_cache(maxsize=128)
 def text_correction(text, limit=1000, length_vary=0.2):
-    """correct the text to be matched to a node"""
+    """
+    correct the text to be matched to a node
+    if it is already in the vocab set, return it immediately
+    """
     text = text.lower()
+    
+    if text in vocab_set:
+        return text, 100
+    
     len_min, len_max = int(max(0, len(text) * (1-length_vary))), int(len(text) * (1+length_vary))
     base_entity = gdb.get_entity_model('BaseEntity')
     # filtered by the first or second character
@@ -70,13 +78,6 @@ def text_preprocessing(search_text, threshold=95, flatten=False):
     """correct and filter n-gram keywords by similarity threshold"""
     search_text = search_text.lower()
     
-    # perfect match: one keyword
-    if gdb.is_entity_exist('BaseEntity', name=search_text):
-        if flatten:
-            return [search_text]
-        return {search_text: []}
-        
-    # not match directly: multiple keywords
     n = len(search_text.split())
     new_keywords = []
     while n:

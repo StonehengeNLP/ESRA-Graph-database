@@ -62,18 +62,29 @@ def filtered_summarization(keys, title, abstract):
     and then throw it into summarization model (we use t5-small in this case)
     so, we will get our explanation that based on entities in the path from keywords to paper
     Although it looks like summarization, it is also explanation of the local graph as well.
+    
+    This filter sentences by
+    1. nodes between path from keywords to paper
+    2. search keys
+    3. static list of words
+    
+    NOTE: Now, I have repeated sentences that contains multiple keywords
+    so, the model can know that the sentences are important and put it in summarization
+    
+    If some cases are very strange, this should has fixed
     """
     
-    nodes = gdb.get_related_nodes(keys, title)
+    nodes = gdb.get_related_nodes(tuple(keys), title)
+    filter_words = nodes + keys + ['we', 'our']
     
     sentences = sent_tokenize(abstract)
     
     selected_sentence = []
     for sentence in sentences:
-        for name in nodes + keys:
+        for name in filter_words:
             if is_include_word(name, sentence):
                 selected_sentence += [sentence]
-                break
+                # break
             
     new_sentence = ' '.join(selected_sentence)
     word_count = count_word(new_sentence)
