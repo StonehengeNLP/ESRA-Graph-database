@@ -120,7 +120,23 @@ def graph():
     
     graph = gs.query_graph(paper_title=paper_title, limit=limit)
     return {'graph': graph}, 200
-    
+
+@app.route('/kwGraph')
+def kwGraph():
+    keys = request.args.get('keys')
+    paper_title = request.args.get('paper_title')
+    limit = request.args.get('limit', 30, type=int)
+
+    if not keys:
+        return jsonify({"msg": "Missing 'keys' parameter"}), 400
+    if not paper_title:
+        jsonify({"msg": "Missing 'paper_title' parameter"}), 400
+        
+    kwGraph = gs.query_graph_key_paper(keys=keys, paper_title=paper_title,
+                                       limit=limit)
+    return {'graph': kwGraph}, 200
+
+
 if __name__ == '__main__':
     # app.run(debug=True) 
     app.run(debug=False, port=80, host='0.0.0.0') 
