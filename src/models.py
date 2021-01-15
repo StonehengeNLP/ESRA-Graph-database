@@ -8,7 +8,7 @@ class BaseRelation(neomodel.StructuredRel):
     weight = neomodel.FloatProperty(default=0)
     create_at = neomodel.DateTimeFormatProperty(format=DATETIME_FORMAT, default_now=True)
     flag_violation = neomodel.BooleanProperty(default=False)
-    from_papers = neomodel.ArrayProperty()
+    from_papers = neomodel.ArrayProperty(neomodel.IntegerProperty(), default=[])
     
 class HyponymOf(BaseRelation):
     pass
@@ -90,6 +90,7 @@ class Abbreviation(BaseEntity):
 class Paper(BaseEntity):
     # cc = neomodel.IntegerProperty()
     # abstract = neomodel.StringProperty()
+    paper_id = neomodel.IntegerProperty(required=True)
     mag_id = neomodel.IntegerProperty()
     # created = neomodel.DateTimeFormatProperty(format=DATETIME_FORMAT)
 

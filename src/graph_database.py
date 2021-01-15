@@ -164,7 +164,7 @@ class GraphDatabase():
             return False
         return True
         
-    def add_relation(self, relation_type, head_entity, tail_entity, confidence=1, **kwargs):
+    def add_relation(self, relation_type, head_entity, tail_entity, confidence=1, from_paper=None, **kwargs):
         assert isinstance(head_entity, models.BaseEntity)
         assert isinstance(tail_entity, models.BaseEntity)
         
@@ -182,6 +182,8 @@ class GraphDatabase():
         except Exception as e:
             # print(e)
             relationship.flag_violation = True
+        if from_paper != None:
+            relationship.from_papers += [from_paper]
         relationship.__dict__.update(kwargs)
         relationship.save()
         return relationship
