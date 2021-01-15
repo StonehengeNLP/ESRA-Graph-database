@@ -82,6 +82,7 @@ class GraphDatabase():
             RETURN DISTINCT
                 n.name as key,
                 round(e.weight,4) as score,
+                e.from_papers as papers,
                 type(e) as type,
                 startnode(e) = n as isSubject,
                 m.name as name

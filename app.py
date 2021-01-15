@@ -107,7 +107,7 @@ def list_of_facts():
     except:
         return jsonify({'msg': 'Database is not available'}), 503
     
-    fact_list = gs.get_facts(processed_keywords)
+    fact_list = gs.get_facts(tuple(processed_keywords))
     return {'facts': fact_list}, 200
 
 @app.route('/graph')
