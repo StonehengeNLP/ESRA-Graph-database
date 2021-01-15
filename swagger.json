@@ -206,6 +206,49 @@
                     }
                 }
             }
+        },
+        "/kwGraph": {
+            "get": {
+                "tags": [
+                    "Graph Database"
+                ],
+                "summary": "Graph path(kw->paper) for visualization",
+                "operationId": "kwGraph",
+                "parameters": [
+                    {
+                        "name": "keys",
+                        "in": "query",
+                        "description": "Search keywords",
+                        "required": true,
+                        "example": "bert"
+                    },
+                    {
+                        "name": "paper_title",
+                        "in": "query",
+                        "description": "Title of the paper",
+                        "required": true,
+                        "example": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding"
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Expected number of relations",
+                        "required": false,
+                        "example": "30"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation"
+                    },
+                    "400": {
+                        "description": "Missing parameter"
+                    },
+                    "503": {
+                        "description": "Service unavailable"
+                    }
+                }
+            }
         }
     },
     "securitySchemes": {

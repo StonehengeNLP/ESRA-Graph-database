@@ -117,6 +117,14 @@ def query_graph(paper_title, limit):
     """
     return gdb.query_graph(paper_title, limit)
 
+@lru_cache(maxsize=128)
+def query_graph_key_paper(keys, paper_title, limit):
+    """
+    Proxy function for gdb.query_graph_key_paper. Uses for query graph
+    containing path from kwyword to paper.
+    """
+    return gdb.query_graph_key_paper(keys, paper_title, limit)
+
 # # TODO: prevent injection
 # def search(keys: list, n=10, mode='pagerank'):
 #     """return ranked papers from subgraph from those keywords using pagerank"""

@@ -99,6 +99,18 @@ class GraphDatabase():
         LIMIT $limit;
         """
     
+    CYPHER_D3_KEY_PAPER = \
+        """
+        MATCH (n)
+        WHERE n.name =~ $key
+        MATCH (m)
+        WHERE m.name =~ $paper_title
+        MATCH path = (n)-[*..2]-(m)-[k]-(p)
+        WHERE type(k) <> 'cite'
+        RETURN path 
+        LIMIT $limit
+        """
+    
     def __init__(self):
         username = settings.NEO4J_USERNAME
         password = settings.NEO4J_PASSWORD
@@ -275,6 +287,41 @@ class GraphDatabase():
             
         relations = list(relations)
         return relations 
+    
+    def query_graph_key_paper(self, keys, paper_title, limit):
+        """
+        Query path from keyword to paper node for visualize on frontend
+        """
+        keys = '|'.join(keys).lower()
+        paper_title = paper_title.lower()
+        paths = db.cypher_query(
+            self.CYPHER_D3_KEY_PAPER, 
+            {'key': keys, 'paper_title':paper_title, 'limit': limit}
+        )[0]
+
+        new_paths = []
+        get_label = lambda x: x[0] if x[0] != 'BaseEntity' else x[1]
+
+        for path in paths:
+            tmp_path = []
+            for relation in path[0]._relationships:
+                relation_type = relation.type
+                
+                start_node_name = relation._start_node._properties['name']
+                start_node_label = get_label(list(relation._start_node.labels))
+
+                end_node_name = relation._end_node._properties['name']
+                end_node_label = get_label(list(relation._end_node.labels))
+
+                tmp_path.append([
+                    relation_type, 
+                    (start_node_name, start_node_label,),
+                    (end_node_name, end_node_label,)
+                ])
+
+            new_paths.append(tmp_path)
+        
+        return new_paths
     
     @lru_cache(maxsize=128)
     def get_related_nodes(self, keys: tuple, paper_title: str, max_hops=3):
