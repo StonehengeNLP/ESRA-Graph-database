@@ -131,8 +131,13 @@ def kwGraph():
         return jsonify({"msg": "Missing 'keys' parameter"}), 400
     if not paper_title:
         jsonify({"msg": "Missing 'paper_title' parameter"}), 400
+
+    try:
+        processed_keywords = gs.text_preprocessing(keys, flatten=True)
+    except:
+        return jsonify({'msg': 'Database is not available'}), 503
         
-    kwGraph = gs.query_graph_key_paper(keys=keys, paper_title=paper_title,
+    kwGraph = gs.query_graph_key_paper(keys=processed_keywords, paper_title=paper_title,
                                        limit=limit)
     return {'graph': kwGraph}, 200
 
