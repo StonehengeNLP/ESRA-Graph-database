@@ -81,11 +81,13 @@ class GraphDatabase():
                 AND NOT m:Paper
             RETURN DISTINCT
                 n.name as key,
+                labels(n) as n_labels,
                 round(e.weight,4) as score,
                 e.from_papers as papers,
                 type(e) as type,
                 startnode(e) = n as isSubject,
-                m.name as name
+                m.name as name,
+                labels(m) as m_labels
             ORDER BY score DESC
             LIMIT 10
         """
