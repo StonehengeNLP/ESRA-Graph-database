@@ -104,7 +104,7 @@ def text_preprocessing(search_text, threshold=95, flatten=False):
     return new_keywords
 
 @lru_cache(maxsize=32)
-def get_facts(keys: list):
+def get_facts(keys: tuple):
     fact_list, scheme = gdb.get_one_hops(keys)
     results = [{k:v for k, v in zip(scheme, fact)} for fact in fact_list]
     return results
