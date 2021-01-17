@@ -137,8 +137,7 @@ def kwGraph():
     except:
         return jsonify({'msg': 'Database is not available'}), 503
         
-    kwGraph = gs.query_graph_key_paper(keys=processed_keywords, paper_title=paper_title,
-                                       limit=limit)
+    kwGraph = gs.query_graph_key_paper(keys=tuple(processed_keywords), paper_title=paper_title, limit=limit)
     return {'graph': kwGraph}, 200
 
 
