@@ -81,10 +81,13 @@ def filtered_summarization(keys, title, abstract):
     
     selected_sentence = []
     for sentence in sentences:
+        n = 0
         for name in filter_words:
             if is_include_word(name, sentence):
                 selected_sentence += [sentence]
-                # break
+                n += 1
+            if n == 4:
+                break
             
     new_sentence = ' '.join(selected_sentence)
     word_count = count_word(new_sentence)
