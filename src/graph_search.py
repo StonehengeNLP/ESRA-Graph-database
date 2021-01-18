@@ -74,7 +74,7 @@ def _drop_insignificant_words(keywords: list):
     return list(d.keys())
 
 @lru_cache(maxsize=128)
-def text_preprocessing(search_text, threshold=95, flatten=False):
+def text_preprocessing(search_text, threshold=95, flatten=False, expand=True):
     """correct and filter n-gram keywords by similarity threshold"""
     search_text = search_text.lower()
     
@@ -96,22 +96,31 @@ def text_preprocessing(search_text, threshold=95, flatten=False):
     new_keywords = _drop_insignificant_words(new_keywords)
 
     # find other relavant words
-    new_keywords = get_related_word(tuple(new_keywords))
+    if expand:
+        new_keywords = get_related_word(tuple(new_keywords))
     
-    # flatten the keywords in dict format
-    if flatten:        
-        flatten_list = []
-        for k, v in new_keywords.items():
-            flatten_list += [k] + v
-        return flatten_list
+        # flatten the keywords in dict format
+        if flatten:        
+            flatten_list = []
+            for k, v in new_keywords.items():
+                flatten_list += [k] + v
+            return flatten_list
 
     return new_keywords
 
 @lru_cache(maxsize=32)
 def get_facts(keys: tuple):
+    """
+    Get facts (relation) with highest confidence from the graph
+    Plus, there will be other nodes which are added to show relationship between them
+    """
+    # facts
     fact_list, scheme = gdb.get_one_hops(keys)
-    results = [{k:v for k, v in zip(scheme, fact)} for fact in fact_list]
-    return results
+    facts = [{k:v for k, v in zip(scheme, fact)} for fact in fact_list]
+    # other relations
+    other_relation, scheme = gdb.query_keyword_graph(keys)
+    others = [{k:v for k, v in zip(scheme, rel)} for rel in other_relation]
+    return facts, others
 
 @lru_cache(maxsize=128)
 def query_graph(paper_title, limit):

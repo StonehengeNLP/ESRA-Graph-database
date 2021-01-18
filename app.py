@@ -103,12 +103,12 @@ def list_of_facts():
         return {'facts': []}, 200
     
     try:
-        processed_keywords = gs.text_preprocessing(query, flatten=True)
+        processed_keywords = gs.text_preprocessing(query, expand=False, flatten=True)
     except:
         return jsonify({'msg': 'Database is not available'}), 503
     
-    fact_list = gs.get_facts(tuple(processed_keywords))
-    return {'facts': fact_list}, 200
+    fact_list, others = gs.get_facts(tuple(processed_keywords))
+    return {'facts': fact_list, 'others': others}, 200
 
 @app.route('/graph')
 def graph():

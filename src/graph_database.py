@@ -62,34 +62,49 @@ class GraphDatabase():
     #         RETURN DISTINCT path2
     #     """
     CYPHER_NODES_KEYS_PAPER = \
-        """ MATCH (m)
-            WHERE m.name =~ $paper_title
-            MATCH path1 = (x)-[r1:appear_in]->(m)
-            WITH COLLECT(x.name) + COLLECT(m.name) as local_nodes, m
-            MATCH path2 = (n)-[*..{hops}]-(m)
-            WHERE n.name =~ $key
-                AND ALL(node in nodes(path2) WHERE node.name in local_nodes)
-            MATCH (q)
-            WHERE q IN nodes(path2)
-            WITH COLLECT(DISTINCT q.name) as out
-            RETURN out
+        """ 
+        MATCH (m)
+        WHERE m.name =~ $paper_title
+        MATCH path1 = (x)-[r1:appear_in]->(m)
+        WITH COLLECT(x.name) + COLLECT(m.name) as local_nodes, m
+        MATCH path2 = (n)-[*..{hops}]-(m)
+        WHERE n.name =~ $key
+            AND ALL(node in nodes(path2) WHERE node.name in local_nodes)
+        MATCH (q)
+        WHERE q IN nodes(path2)
+        WITH COLLECT(DISTINCT q.name) as out
+        RETURN out
         """
     CYPHER_ONE_HOP = \
         """
-            MATCH (n)-[e]-(m)
-            WHERE n.name =~ $key
-                AND NOT m:Paper
-            RETURN DISTINCT
-                n.name as key,
-                labels(n) as n_labels,
-                round(e.weight,4) as score,
-                e.from_papers as papers,
-                type(e) as type,
-                startnode(e) = n as isSubject,
-                m.name as name,
-                labels(m) as m_labels
-            ORDER BY score DESC
-            LIMIT 10
+        MATCH (n)-[e]-(m)
+        WHERE n.name =~ $key
+            AND NOT m:Paper
+        RETURN DISTINCT
+            n.name as key,
+            labels(n) as n_labels,
+            round(e.weight,4) as score,
+            e.from_papers as papers,
+            type(e) as type,
+            startnode(e) = n as isSubject,
+            m.name as name,
+            labels(m) as m_labels
+        ORDER BY score DESC
+        LIMIT 10
+        """
+    CYPHER_KEYWORD_GRAPH = \
+        """
+        MATCH (n)-[e]-(m)
+        WHERE n.name in $key_list
+            AND NOT m:Paper
+        RETURN DISTINCT
+            n.name as key,
+            labels(n) as n_labels,
+            type(e) as type,
+            startnode(e) = n as isSubject,
+            m.name as name,
+            labels(m) as m_labels
+        LIMIT $limit
         """
     CYPHER_D3_QUERY = \
         """
@@ -325,6 +340,15 @@ class GraphDatabase():
             new_paths.append(tmp_path)
         
         return new_paths
+    
+    def query_keyword_graph(self, keys):
+        """
+        This function is for querying graph containing keywords and relation path regarding keywords
+        and attached with fact list to visualize in search page
+        """
+        n = len(keys) * 3
+        nodes = db.cypher_query(self.CYPHER_KEYWORD_GRAPH, {'key_list': list(keys), 'limit': n})
+        return nodes
     
     @lru_cache(maxsize=128)
     def get_related_nodes(self, keys: tuple, paper_title: str, max_hops=3):
