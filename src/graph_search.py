@@ -83,9 +83,13 @@ def text_preprocessing(search_text, threshold=95, flatten=False):
     while n:
         keywords = _generate_ngrams(search_text, n=n)
         for keyword in keywords:
-            new_word, score = text_correction(keyword, length_vary=0.1)
+            new_word, score = text_correction(keyword, length_vary=0.05)
             if score >= threshold:
                 new_keywords += [new_word]
+            else:
+                suggest_word = get_related_word(keyword, threshold=0.96, limit=1)[keyword]
+                if suggest_word != []:
+                    new_keywords += [suggest_word[0]]
         n -= 1
     
     # drop insignificant words

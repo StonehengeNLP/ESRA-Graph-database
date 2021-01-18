@@ -75,7 +75,7 @@ def filtered_summarization(keys, title, abstract):
     """
     
     nodes = gdb.get_related_nodes(tuple(keys), title)
-    filter_words = nodes + keys + ['we', 'our']
+    filter_words = nodes + keys + ['we', 'our', 'in this paper']
     
     sentences = sent_tokenize(abstract)
     
