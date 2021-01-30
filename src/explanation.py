@@ -120,10 +120,10 @@ def filtered_summarization(keys, title, abstract):
     summ = _filter_and_summarize(filter_words, abstract)
     
     # When summary does not contain search keys
-    hit = [is_include_word(key, summ) for key in flatten_key]
-    hit = sum(hit) / len(hit)
+    keyword_contained = [key for key in flatten_key if is_include_word(key, summ)]
+    hit = len(keyword_contained) / len(flatten_key)
     if hit < 0.5:
         filter_words = flatten_key + ['we', 'our', 'in this paper']
         summ = _filter_and_summarize(filter_words, abstract)
         
-    return summ
+    return summ, keyword_contained

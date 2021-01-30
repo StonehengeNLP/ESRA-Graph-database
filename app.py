@@ -90,7 +90,8 @@ def explanation():
     
     explanations = []
     for paper, abstract in zip(papers, abstracts):
-        explanations.append(ex.filtered_summarization(processed_keywords, paper.lower(), abstract))
+        summary, keyword_contained = ex.filtered_summarization(processed_keywords, paper.lower(), abstract)
+        explanations.append((summary, keyword_contained))
     return jsonify({'explanations': explanations}), 200
 
 @app.route('/facts')
