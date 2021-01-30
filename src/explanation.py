@@ -85,7 +85,7 @@ def _filter_and_summarize(keywords: list, abstract: str) -> str:
         summ = ''
     return summ
         
-def filtered_summarization(keys, title, abstract):
+def filtered_summarization(keyword, processed_keys, title, abstract):
     """
     This explanation method is to filter some sentences that include keyword(s)
     and then throw it into summarization model (we use t5-small in this case)
@@ -104,15 +104,16 @@ def filtered_summarization(keys, title, abstract):
     """
     
     # Select a candicate word for each key that is in the given abstract 
-    flatten_key = []
-    for key in keys:
+    flatten_key = {keyword}
+    for key in processed_keys:
         if is_include_word(key, abstract):
-            flatten_key += [key]
+            flatten_key.add(key)
         else:
-            for related_word in keys[key]:
+            for related_word in processed_keys[key]:
                 if is_include_word(related_word, abstract):
-                    flatten_key += [related_word]
+                    flatten_key.add(related_word)
                     break
+    flatten_key = list(flatten_key)            
     
     # Get all related keyword. Then filter and summarize
     nodes = gdb.get_related_nodes(tuple(flatten_key), title)
