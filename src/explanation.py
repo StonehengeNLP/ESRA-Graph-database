@@ -26,7 +26,8 @@ def is_include_word(word, text):
     I have handled plural cases by adding just 's' and 'es'
     you could make it smarter :D
     """
-    return re.search(r'\b{}(s|es){{0,1}}\b'.format(word), text, flags=re.IGNORECASE)
+    r = re.search(r'\b{}(s|es){{0,1}}\b'.format(word), text, flags=re.IGNORECASE)
+    return bool(r)
 
 def count_word(text):
     """
@@ -52,10 +53,38 @@ def _summarize(sentence, max_length, min_length):
     """
     this function is for summarizing sentences
     """
-    summ = t5_small(sentence, max_length=100, min_length=min_length)[0]['summary_text']
+    summ = t5_small(sentence, max_length=150, min_length=min_length)[0]['summary_text']
     summ = beautify(summ)
     return summ
 
+def _filter_and_summarize(keywords: list, abstract: str) -> str:
+    """
+    Filter some sentences from abstract by given keywords
+    then summarize
+    """
+    sentences = sent_tokenize(abstract)
+    
+    selected_sentence = []
+    for sentence in sentences:
+        n = 0
+        for name in keywords:
+            if is_include_word(name, sentence):
+                selected_sentence += [sentence]
+                n += 1
+            if n == 4:
+                break
+            
+    new_sentence = ' '.join(selected_sentence)
+    word_count = count_word(new_sentence)
+    # print(new_sentence)
+
+    if word_count > 10:
+        min_length = min(50, word_count)
+        summ = _summarize(new_sentence, max_length=100, min_length=min_length)
+    else:
+        summ = ''
+    return summ
+        
 def filtered_summarization(keys, title, abstract):
     """
     This explanation method is to filter some sentences that include keyword(s)
@@ -74,30 +103,27 @@ def filtered_summarization(keys, title, abstract):
     If some cases are very strange, this should has fixed
     """
     
-    nodes = gdb.get_related_nodes(tuple(keys), title)
-    filter_words = nodes + keys + ['we', 'our', 'in this paper']
+    # Select a candicate word for each key that is in the given abstract 
+    flatten_key = []
+    for key in keys:
+        if is_include_word(key, abstract):
+            flatten_key += [key]
+        else:
+            for related_word in keys[key]:
+                if is_include_word(related_word, abstract):
+                    flatten_key += [related_word]
+                    break
     
-    sentences = sent_tokenize(abstract)
+    # Get all related keyword. Then filter and summarize
+    nodes = gdb.get_related_nodes(tuple(flatten_key), title)
+    filter_words = nodes + flatten_key + ['we', 'our', 'in this paper']
+    summ = _filter_and_summarize(filter_words, abstract)
     
-    selected_sentence = []
-    for sentence in sentences:
-        n = 0
-        for name in filter_words:
-            if is_include_word(name, sentence):
-                selected_sentence += [sentence]
-                n += 1
-            if n == 4:
-                break
-            
-    new_sentence = ' '.join(selected_sentence)
-    word_count = count_word(new_sentence)
-    # print(new_sentence)
-
-    if word_count > 10:
-        min_length = min(50, word_count)
-        summ = _summarize(new_sentence, max_length=100, min_length=min_length)
-        
-    else:
-        summ = ''
+    # When summary does not contain search keys
+    hit = [is_include_word(key, summ) for key in flatten_key]
+    hit = sum(hit) / len(hit)
+    if hit < 0.5:
+        filter_words = flatten_key + ['we', 'our', 'in this paper']
+        summ = _filter_and_summarize(filter_words, abstract)
         
     return summ

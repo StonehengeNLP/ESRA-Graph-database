@@ -83,7 +83,7 @@ def explanation():
         return jsonify({"msg": "Missing 'abstracts' parameter"}), 400
     
     try:
-        processed_keywords = gs.text_preprocessing(keyword, flatten=True)
+        processed_keywords = gs.text_preprocessing(keyword)
     except Exception as e:
         print(e)
         return jsonify({'msg': 'Database is not available'}), 503
