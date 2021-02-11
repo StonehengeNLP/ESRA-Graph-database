@@ -25,7 +25,7 @@ def swagger():
         
     swagger_env = settings.FLASK_ENV
     if swagger_env == 'production':
-        swagger_json['host'] = '35.247.162.211'
+        swagger_json['host'] = '13.250.112.78:58880'
         swagger_json['schemes'] = ['http']
 
     return swagger_json
@@ -143,5 +143,5 @@ def kwGraph():
 
 
 if __name__ == '__main__':
-    # app.run(debug=True) 
-    app.run(debug=False, port=80, host='0.0.0.0') 
+    # app.run(debug=False)
+    app.run(debug=False, port=8000, host='0.0.0.0') 

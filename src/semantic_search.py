@@ -1,10 +1,13 @@
 import os
 import scipy
+import torch
 import pickle
+
 from functools import lru_cache
 from sentence_transformers import SentenceTransformer
 
 # Prepare model
+device = 1 if torch.cuda.is_available() else 'cpu'
 model_roberta = SentenceTransformer('roberta-large-nli-mean-tokens', device='cpu')
 
 # Prepare data
