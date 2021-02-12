@@ -91,7 +91,7 @@ class Paper(BaseEntity):
     # cc = neomodel.IntegerProperty()
     # abstract = neomodel.StringProperty()
     paper_id = neomodel.IntegerProperty(required=True)
-    mag_id = neomodel.IntegerProperty()
+    arxiv_id = neomodel.StringProperty()
     # created = neomodel.DateTimeFormatProperty(format=DATETIME_FORMAT)
 
 class Author(BaseEntity):
