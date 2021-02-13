@@ -8,7 +8,7 @@ from sentence_transformers import SentenceTransformer
 
 # Prepare model
 device = 1 if torch.cuda.is_available() else 'cpu'
-model_roberta = SentenceTransformer('roberta-large-nli-mean-tokens', device='cpu')
+model_roberta = SentenceTransformer('roberta-large-nli-mean-tokens', device=device)
 
 # Prepare data
 proj_dir = os.path.dirname(os.path.dirname(__file__))
@@ -24,6 +24,8 @@ if os.path.isfile(vocab_path) and not os.path.isfile(vocab_embeddings_path):
     vocab_embeddings = model_roberta.encode(vocab)
     with open(vocab_embeddings_path, 'wb') as f:
         pickle.dump(vocab_embeddings, f)
+    with open(vocab_path, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(vocab))
     print('finished the vocab embeddings ...')
     
 with open(vocab_embeddings_path, 'rb') as f:
