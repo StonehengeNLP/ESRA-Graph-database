@@ -102,6 +102,10 @@ def explanation():
         
     return jsonify({'explanations': explanations}), 200
 
+import pandas as pd
+df = pd.read_csv('data/csv/kaggle-arxiv-cscl-2020-12-18.csv')
+id_2_arxiv = df.id.to_dict()
+
 @app.route('/facts')
 def list_of_facts():
     query = request.args.get('q')
@@ -117,6 +121,13 @@ def list_of_facts():
         return jsonify({'msg': 'Database is not available'}), 503
     
     fact_list, others = gs.get_facts(tuple(processed_keywords))
+    
+    #############################
+    for fact in fact_list:
+        fact['papers'] = [id_2_arxiv[pid] for pid in fact['papers']]
+    #############################
+        
+    # Conver paper to arxiv ids
     return {'facts': fact_list, 'others': others}, 200
 
 @app.route('/graph')
