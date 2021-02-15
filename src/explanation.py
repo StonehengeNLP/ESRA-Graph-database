@@ -13,11 +13,27 @@ from functools import lru_cache
 from transformers import pipeline
 from .graph_database import GraphDatabase
 
-
+class MultiPipeline:
+    
+    def __init__(self, num_pipes=1):
+        self.pipelines = [pipeline("summarization", model='t5-small', device=i) for i in range(num_pipes)]
+        self.locks = [0] * num_pipes
+        self.num_pipes = num_pipes
+        
+    def __call__(self, *args, **kwargs):
+        for i in range(self.num_pipes):
+            if self.locks[i] == 0:
+                self.locks[i] = 1
+                result = self.pipelines[i](*args, **kwargs)
+                self.locks[i] = 0
+                return result
+    
 gdb = GraphDatabase()
 
-device = 0 if torch.cuda.is_available() else -1
-t5_small = pipeline("summarization", model='t5-small', device=device)
+if torch.cuda.is_available():
+    t5_small = MultiPipeline(num_pipes=torch.cuda.device_count())
+else:
+    t5_small = pipeline("summarization", model='t5-small', device='cpu')
 
 
 def is_include_word(word, text):
@@ -27,7 +43,7 @@ def is_include_word(word, text):
     I have handled plural cases by adding just 's' and 'es'
     you could make it smarter :D
     """
-    r = re.search(r'\b{}(s|es){{0,1}}\b'.format(word), text, flags=re.IGNORECASE)
+    r = re.search(r'\b{}(s|es){{0,1}}\b'.format(word), text.lower())
     return bool(r)
 
 def count_word(text):
@@ -58,7 +74,7 @@ def _summarize(sentence, max_length, min_length):
     summ = t5_small(sentence, max_length=150, min_length=min_length)[0]['summary_text']
     summ = beautify(summ)
     sum_time = time.time() - t
-    print(f'Summarized: {t:.03f}')
+    print(f'Summarized: {sum_time:.03f}')
     return summ
 
 def _filter_and_summarize(keywords: list, abstract: str) -> str:
@@ -89,6 +105,7 @@ def _filter_and_summarize(keywords: list, abstract: str) -> str:
         summ = ''
     return summ
         
+import time
 def filtered_summarization(keyword, processed_keys, title, abstract):
     """
     This explanation method is to filter some sentences that include keyword(s)
@@ -120,15 +137,25 @@ def filtered_summarization(keyword, processed_keys, title, abstract):
     flatten_key = list(flatten_key)            
     
     # Get all related keyword. Then filter and summarize
+    
+    t = time.time()
     nodes = gdb.get_related_nodes(tuple(flatten_key), title)
+    
+    ##############################
+    total = time.time() - t
+    print('nodes', len(nodes))
+    print(nodes)
+    print('total', total)
+    ##############################
+    
     filter_words = nodes + flatten_key + ['we', 'our', 'in this paper']
     summ = _filter_and_summarize(filter_words, abstract)
     
     # When summary does not contain search keys
     keyword_contained = [key for key in flatten_key if is_include_word(key, summ)]
-    hit = len(keyword_contained) / len(flatten_key)
-    if hit < 0.5:
+    if len(keyword_contained) == 0:
         filter_words = flatten_key + ['we', 'our', 'in this paper']
         summ = _filter_and_summarize(filter_words, abstract)
+        keyword_contained = [key for key in flatten_key if is_include_word(key, summ)]
         
     return summ, keyword_contained

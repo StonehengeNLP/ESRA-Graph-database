@@ -1,4 +1,7 @@
+import torch
 import json
+import concurrent.futures
+
 from src import settings
 from src import graph_search as gs
 from src import explanation as ex
@@ -88,10 +91,15 @@ def explanation():
         print(e)
         return jsonify({'msg': 'Database is not available'}), 503
     
-    explanations = []
-    for paper, abstract in zip(papers, abstracts):
-        summary, keyword_contained = ex.filtered_summarization(keyword, processed_keywords, paper.lower(), abstract)
-        explanations.append((summary, keyword_contained))
+    num_gpus = torch.cuda.device_count()
+    with concurrent.futures.ThreadPoolExecutor(max_workers=num_gpus) as executor:
+        futures = []
+        for paper, abstract in zip(papers, abstracts):
+            args = (keyword, processed_keywords, paper.lower(), abstract)
+            futures += [executor.submit(ex.filtered_summarization, *args)]
+
+    explanations = [r.result() for r in futures]
+        
     return jsonify({'explanations': explanations}), 200
 
 @app.route('/facts')

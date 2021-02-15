@@ -31,22 +31,18 @@ class GraphDatabase():
         """
     CYPHER_CREATE_INDEX_3 = \
         """
-        CREATE CONSTRAINT on (b:BaseEntity)
+        CREATE CONSTRAINT on (b:Paper)
         ASSERT b.arxiv_id IS UNIQUE
         """
     CYPHER_NODES_KEYS_PAPER = \
-        """ 
-        MATCH (m:Paper)
-        USING INDEX m:Paper(name)
-        WHERE m.name = $paper_title
-        MATCH path1 = (x)-[r1:appear_in]->(m)
-        WITH COLLECT(x.name) + COLLECT(m.name) as local_nodes, m
-        MATCH path2 = (n)-[*..{hops}]-(m)
-        WHERE n.name = $key
-            AND ALL(node in nodes(path2) WHERE node.name in local_nodes)
-        MATCH (q)
-        WHERE q IN nodes(path2)
-        WITH COLLECT(DISTINCT q.name) as out
+        """
+        MATCH (n:BaseEntity)-[r1]-(m:BaseEntity)-[r2:appear_in]-(b:Paper)
+        USING INDEX n:BaseEntity(name)
+        USING INDEX b:Paper(name)
+        WHERE n.name = $key 
+            AND b.name = $paper_title
+            AND NOT m:Paper
+        WITH COLLECT(DISTINCT m.name) as out
         RETURN out
         """
     CYPHER_ONE_HOP = \
@@ -104,6 +100,13 @@ class GraphDatabase():
         WHERE type(k) <> 'cite'
         RETURN path 
         LIMIT $limit
+        """
+    CYPHER_SUM_ENTITY_COUNT = \
+        """
+        MATCH (m:BaseEntity)
+        USING INDEX m:BaseEntity(name)
+        WHERE m.name = $key
+        RETURN sum(m.count)
         """
     
     def __init__(self):
@@ -169,9 +172,8 @@ class GraphDatabase():
         return target_entity
     
     def count_entity(self, entity_name):
-        base_entity = self.get_entity_model('BaseEntity')
-        nodes = base_entity.nodes.filter(name__iexact=entity_name)
-        return sum([n.count for n in nodes])
+        res = db.cypher_query(self.CYPHER_SUM_ENTITY_COUNT, {'key': entity_name})
+        return res
     
     def get_relation(self, relation_type, head_entity):
         assert isinstance(head_entity, models.BaseEntity)
@@ -289,7 +291,7 @@ class GraphDatabase():
         return nodes
     
     @lru_cache(maxsize=128)
-    def get_related_nodes(self, keys: tuple, paper_title: str, max_hops=3):
+    def get_related_nodes(self, keys: tuple, paper_title: str, max_hops=2):
         """
         This function is for querying nodes and send it to summarization
         """

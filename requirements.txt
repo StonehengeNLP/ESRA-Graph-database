@@ -14,3 +14,4 @@ nltk
 transformers
 sentencepiece
 python-Levenshtein
+tltk
