@@ -30,7 +30,6 @@ if os.path.isfile(vocab_path) and not os.path.isfile(vocab_embeddings_path):
 with open(vocab_embeddings_path, 'rb') as f:
     vocab_embeddings = pickle.load(f)
 
-import time
 @lru_cache(maxsize=128)
 def get_related_word(query, threshold=0.93, limit=3):
     """
@@ -55,12 +54,12 @@ def get_related_word(query, threshold=0.93, limit=3):
 
         cos_scores = util.pytorch_cos_sim(query_embedding, vocab_embeddings)[0]
         scores, indexes = torch.topk(cos_scores, k=limit)
-
+        
         out[query] = []
         for score, idx in zip(scores, indexes):
             
             # check threshold and length limit
-            if score < threshold or len(out[query]) >= limit:
+            if float(score) < threshold or len(out[query]) >= limit:
                 break
             
             # check query not include in the word

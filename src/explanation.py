@@ -7,7 +7,6 @@ except LookupError:
     nltk.download('punkt')
   
 import re
-import time
 import torch
 from functools import lru_cache
 from transformers import pipeline
@@ -70,11 +69,8 @@ def _summarize(sentence, max_length, min_length):
     """
     this function is for summarizing sentences
     """
-    t = time.time()
     summ = t5_small(sentence, max_length=150, min_length=min_length)[0]['summary_text']
     summ = beautify(summ)
-    sum_time = time.time() - t
-    print(f'Summarized: {sum_time:.03f}')
     return summ
 
 def _filter_and_summarize(keywords: list, abstract: str) -> str:
@@ -105,7 +101,6 @@ def _filter_and_summarize(keywords: list, abstract: str) -> str:
         summ = ''
     return summ
         
-import time
 def filtered_summarization(keyword, processed_keys, title, abstract):
     """
     This explanation method is to filter some sentences that include keyword(s)
@@ -138,15 +133,7 @@ def filtered_summarization(keyword, processed_keys, title, abstract):
     
     # Get all related keyword. Then filter and summarize
     
-    t = time.time()
     nodes = gdb.get_related_nodes(tuple(flatten_key), title)
-    
-    ##############################
-    total = time.time() - t
-    print('nodes', len(nodes))
-    print(nodes)
-    print('total', total)
-    ##############################
     
     filter_words = nodes + flatten_key + ['we', 'our', 'in this paper']
     summ = _filter_and_summarize(filter_words, abstract)

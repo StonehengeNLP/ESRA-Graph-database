@@ -57,14 +57,6 @@ def text_correction(text, limit=1000, length_vary=0.2):
         return best, best_score
     return None, 0
 
-def _generate_ngrams(s, n):
-    s = s.lower()
-    tokens = [token for token in s.split(" ") if token != ""]
-    ngrams = zip(*[tokens[i:] for i in range(n)])
-    ngrams = [" ".join(ngram) for ngram in ngrams]
-    return ngrams
-
-# NOTE: the keywords must be sorted as _generate_ngrams()
 def _drop_insignificant_words(keywords: list):
     """remove unpopular words which are subtext and less number than another one"""
     d = {}
@@ -77,27 +69,33 @@ def _drop_insignificant_words(keywords: list):
             d[keyword] = c
     return list(d.keys())
 
-import time
-@lru_cache(maxsize=128)
+# @lru_cache(maxsize=128)
 def text_preprocessing(search_text, threshold=95, flatten=False, expand=True):
     """correct and filter n-gram keywords by similarity threshold"""
     search_text = search_text.lower()
     
-    n = min(3, len(search_text.split()))
+    search_text_list = search_text.split()
+    
+    i = 0
     new_keywords = []
-    while n:
-        keywords = _generate_ngrams(search_text, n=n)
-        for keyword in keywords:
+    while i < len(search_text_list):
+        n = min(3, len(search_text_list))
+        while n:
+            keyword = ' '.join(search_text_list[i:i+n])
             if keyword in stop_words:
                 continue
             new_word, score = text_correction(keyword, length_vary=0.05)
             if score >= threshold:
                 new_keywords += [new_word]
+                i += n
+                break
             else:
                 suggest_word = get_related_word(keyword, threshold=0.96, limit=1)[keyword]
-                if suggest_word != []:
+                if suggest_word != [] and keyword not in suggest_word[0]:
                     new_keywords += [suggest_word[0]]
-        n -= 1
+            n -= 1
+        else:
+            i += 1
 
     # drop insignificant words
     new_keywords = _drop_insignificant_words(new_keywords)
