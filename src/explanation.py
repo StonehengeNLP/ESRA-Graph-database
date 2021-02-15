@@ -7,6 +7,7 @@ except LookupError:
     nltk.download('punkt')
   
 import re
+import time
 import torch
 from functools import lru_cache
 from transformers import pipeline
@@ -53,8 +54,11 @@ def _summarize(sentence, max_length, min_length):
     """
     this function is for summarizing sentences
     """
+    t = time.time()
     summ = t5_small(sentence, max_length=150, min_length=min_length)[0]['summary_text']
     summ = beautify(summ)
+    sum_time = time.time() - t
+    print(f'Summarized: {t:.03f}')
     return summ
 
 def _filter_and_summarize(keywords: list, abstract: str) -> str:
