@@ -20,55 +20,29 @@ from neomodel import config, db, match
 class GraphDatabase():
 
     CYPHER_DELETE_ALL = "MATCH (n) DETACH DELETE n"
-    CYPHER_GRAPH_CHECK = "CALL gds.graph.exists( $graph_name )"
-    # CYPHER_GRAPH_CREATE = \
-    #     """ CALL gds.graph.create.cypher(
-    #             $graph_name,
-    #             'MATCH (n)-[e *0..2]-(m) \
-    #                 WHERE m.name =~ $key \
-    #                 RETURN distinct(id(n)) AS id',
-    #             'MATCH (n)-[e]-(m) \
-    #                 RETURN id(n) AS source, e.weight AS weight, id(m) AS target',
-    #             {{validateRelationships: false}}
-    #         )
-    #     """
-    # CYPHER_GRAPH_DELETE = "CALL gds.graph.drop($graph_name)"
-    # CYPHER_PAGE_RANK = \
-    #     """ MATCH (n)
-    #         WHERE n.name =~ $key
-    #         CALL gds.pageRank.stream( $graph_name, {{
-    #             maxIterations: 20,
-    #             dampingFactor: 0.85,
-    #             relationshipWeightProperty: 'weight',
-    #             sourceNodes: [n]
-    #         }})
-    #         YIELD nodeId, score WITH gds.util.asNode(nodeId) as node, score
-    #         WHERE node:Paper
-    #         RETURN DISTINCT
-    #             sum(score) AS score,
-    #             node.cc,
-    #             node.name
-    #         ORDER BY score DESC
-    #     """
-    # CYPHER_CHECK_NODE_EXIST = "MATCH (n) WHERE n.name =~ $key RETURN count(n);"
-    # CYPHER_PATH_KEYS_PAPER = \
-    #     """ MATCH (m)
-    #         WHERE m.name =~ $paper_title
-    #         MATCH path1 = (x)-[r1:appear_in]->(m)
-    #         WITH COLLECT(x.name) + COLLECT(m.name) as local_nodes, m
-    #         MATCH path2 = (n)-[*..{hops}]-(m)
-    #         WHERE n.name =~ $key
-    #             AND ALL(node in nodes(path2) WHERE node.name in local_nodes)
-    #         RETURN DISTINCT path2
-    #     """
+    CYPHER_CREATE_INDEX_1 = \
+        """
+        CREATE INDEX ON :BaseEntity(name)
+        """
+    CYPHER_CREATE_INDEX_2 = \
+        """
+        CREATE CONSTRAINT on (p:Paper)
+        ASSERT p.name IS UNIQUE
+        """
+    CYPHER_CREATE_INDEX_3 = \
+        """
+        CREATE CONSTRAINT on (b:BaseEntity)
+        ASSERT b.arxiv_id IS UNIQUE
+        """
     CYPHER_NODES_KEYS_PAPER = \
         """ 
-        MATCH (m)
-        WHERE m.name =~ $paper_title
+        MATCH (m:Paper)
+        USING INDEX m:Paper(name)
+        WHERE m.name = $paper_title
         MATCH path1 = (x)-[r1:appear_in]->(m)
         WITH COLLECT(x.name) + COLLECT(m.name) as local_nodes, m
         MATCH path2 = (n)-[*..{hops}]-(m)
-        WHERE n.name =~ $key
+        WHERE n.name = $key
             AND ALL(node in nodes(path2) WHERE node.name in local_nodes)
         MATCH (q)
         WHERE q IN nodes(path2)
@@ -77,13 +51,14 @@ class GraphDatabase():
         """
     CYPHER_ONE_HOP = \
         """
-        MATCH (n)-[e]-(m)
-        WHERE n.name =~ $key
+        MATCH (n:BaseEntity)-[e]-(m)
+        USING INDEX n:BaseEntity(name)
+        WHERE n.name = $key
             AND NOT m:Paper
         RETURN DISTINCT
             n.name as key,
             labels(n) as n_labels,
-            round(e.weight,4) as score,
+            e.weight as score,
             e.from_papers as papers,
             type(e) as type,
             startnode(e) = n as isSubject,
@@ -109,20 +84,22 @@ class GraphDatabase():
     CYPHER_D3_QUERY = \
         """
         MATCH (n:Paper)
-        WHERE n.name =~ $paper_title
+        USING INDEX n:Paper(name)
+        WHERE n.name = $paper_title
         MATCH (n)-[r:appear_in]-(m)
         MATCH (n)-[t:appear_in]-(p)
         MATCH (m)<-[k]-(p)
         RETURN DISTINCT n.name, labels(n), type(r), m.name, labels(m), type(k), p.name, labels(p)
         LIMIT $limit;
         """
-    
     CYPHER_D3_KEY_PAPER = \
         """
-        MATCH (n)
-        WHERE n.name =~ $key
-        MATCH (m)
-        WHERE m.name =~ $paper_title
+        MATCH (m:Paper)
+        USING INDEX m:Paper(name)
+        WHERE m.name = $paper_title
+        MATCH (n:BaseEntity)
+        USING INDEX n:BaseEntity(name)
+        WHERE n.name = $key
         MATCH path = (n)-[*..2]-(m)-[k]-(p)
         WHERE type(k) <> 'cite'
         RETURN path 
@@ -135,8 +112,27 @@ class GraphDatabase():
         host = settings.NEO4J_HOST
         port = settings.NEO4J_PORT
         config.DATABASE_URL = f'bolt://{username}:{password}@{host}:{port}'
-
+        self.create_indexes()
+        
+    def create_indexes(self):
+        """
+        Create all indexes to search faster in Neo4j
+        """
+        try: db.cypher_query(self.CYPHER_CREATE_INDEX_1)
+        except: pass
+        
+        try: db.cypher_query(self.CYPHER_CREATE_INDEX_2)
+        except: pass
+        
+        try: db.cypher_query(self.CYPHER_CREATE_INDEX_3)
+        except: pass
+        
+        
     def clear_all(self):
+        """
+        Clear all nodes and relations
+        ** Carefully use this method
+        """
         db.cypher_query(self.CYPHER_DELETE_ALL)
         
     def get_entity_model(self, entity_type):
@@ -218,64 +214,6 @@ class GraphDatabase():
         relationship.save()
         return relationship
         
-    # def is_node_exist(self, key):
-    #     """ Check if node exist before searching """
-    #     exist = (db.cypher_query(self.CYPHER_CHECK_NODE_EXIST, {'key': key})[0][0][0])
-    #     return True if exist else False
-
-    # def is_cypher_graph_exist(self, keys: list):
-    #     graph_name = ''.join(keys)
-    #     is_exist = db.cypher_query(self.CYPHER_GRAPH_CHECK, {'graph_name': graph_name})[0][0][1]
-    #     return is_exist
-    
-    # def create_cypher_graph(self, keys: list):
-    #     graph_name = ''.join(keys)
-    #     key = '|'.join(keys)
-    #     db.cypher_query(self.CYPHER_GRAPH_CREATE, {'graph_name': graph_name, 'key': key})
-    
-    # def delete_cypher_graph(self, keys: list):
-    #     graph_name = ''.join(keys)
-    #     db.cypher_query(self.CYPHER_GRAPH_DELETE, {'graph_name': graph_name})
-    
-    # def pagerank(self, keys: list):
-    #     graph_name = ''.join(keys)
-    #     key = '|'.join(keys)
-    #     results = db.cypher_query(self.CYPHER_PAGE_RANK, {'key': key, 'graph_name': graph_name})[0]
-    #     return results
-    
-    # def get_paths(self, keys: list, paper_title: str, local=True, max_hops=3):
-    #     """
-    #     Retrieve paths from given keys to target paper
-    #     use only CYPHER_PATH_KEYS_PAPER
-        
-    #     :param keys: list of preprocessed keys
-    #     :param paper_title: the title name of target paper
-    #     :param local: all retrieved entities will be from the paper (local graph)
-    #     :param max_hops: maximum number of hops will be returned
-        
-    #     :return: path from keys to paper_title
-    #     """
-    #     key = '|'.join(keys)
- 
-    #     query = self.CYPHER_PATH_KEYS_PAPER.format(hops=max_hops)
-    #     paths = db.cypher_query(query, {'key': key, 'paper_title': paper_title})[0]
-
-    #     new_paths = []
-    #     for path in paths:
-    #         temp_path = []
-    #         for j in path[0]._relationships:
-    #             relation_type = j.type
-    #             relation_weight = j._properties['weight']
-    #             start_node = j._start_node._properties['name']
-    #             start_node_class = list(j._start_node.labels)
-    #             start_node_class = [label for label in start_node_class if label != 'BaseEntity']
-    #             end_node = j._end_node._properties['name']
-    #             end_node_class = list(j._end_node.labels)
-    #             end_node_class = [label for label in end_node_class if label != 'BaseEntity']
-    #             temp_path.append([relation_type, relation_weight, (start_node, start_node_class), (end_node, end_node_class)])
-    #         new_paths.append(temp_path)
-    #     return new_paths
-
     def get_one_hops(self, keys: list):
         key = '|'.join(keys)
         results = db.cypher_query(self.CYPHER_ONE_HOP, {'key': key})
