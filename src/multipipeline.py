@@ -11,7 +11,7 @@ class MultiPipeline:
             else:
                 self.num_pipes = num_pipes
             self.pipelines = [pipeline("summarization", model='t5-small', device=i) for i in range(self.num_pipes)]
-            print(f'>>>> Initialize {num_pipes} pipelines with GPUs')
+            print(f'>>>> Initialize {self.num_pipes} pipelines with GPUs')
         else:
             self.num_pipes = 1
             self.pipelines = [pipeline("summarization", model='t5-small', device=-1)]
@@ -20,16 +20,16 @@ class MultiPipeline:
         self.locks = [0] * self.num_pipes
         
     def __call__(self, *args, **kwargs):
-        MAX_RETRIES = 10
+        MAX_RETRIES = 20
         retries = 0
         while True:
             if retries >= MAX_RETRIES:
-                return [{'summary_text': ''}]
+                raise Exception('Exceed maximum retries')
             for i in range(self.num_pipes):
                 if self.locks[i] == 0:
                     self.locks[i] = 1
                     result = self.pipelines[i](*args, **kwargs)
                     self.locks[i] = 0
                     return result
-            time.sleep(1)
+            time.sleep(0.5)
             retries += 1

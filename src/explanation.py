@@ -89,13 +89,13 @@ def _filter_sentences(keywords: list, abstract: str) -> str:
             if is_include_word(name, lem_sent):
                 selected_sentence += [sentence]
                 n += 1
-            if n == 3:
+            if n == 2:
                 break
             
     new_sentence = ' '.join(selected_sentence)
     return new_sentence
         
-def filtered_summarization(keyword:str, processed_keys:list, titles:list, abstracts:list) -> list:
+def filtered_summarization(keyword:str, processed_keys:list, title:str, abstract:str) -> list:
     """
     This explanation method is to filter some sentences that include keyword(s)
     and then throw it into summarization model (we use t5-small in this case)
@@ -112,41 +112,48 @@ def filtered_summarization(keyword:str, processed_keys:list, titles:list, abstra
     
     If some cases are very strange, this should has fixed
     """
-    assert len(titles) == len(abstracts)
-    
-    out = []
-    for title, abstract in zip(titles, abstracts):
-    
-        # Get all related keywords from graph
-        all_key_nodes = {keyword} | set(processed_keys)
-        nodes = gdb.get_related_nodes(tuple(all_key_nodes), title)
-    
-        # Get all sentences related to keywords
-        filter_words = list(nodes) + list(all_key_nodes)
-        filtered_text = _filter_sentences(filter_words, abstract)
-        # print(filtered_text)
-        # print(count_word(filtered_text))
         
-        # Put the sentences into summarizer
-        summary = _summarize(filtered_text)
-        lem_summary, lem_map = lemmatize(summary, lem_to_kw=True)
-        keyword_contained = [key for key in all_key_nodes if is_include_word(key, lem_summary)]
+    # Get all related keywords from graph
+    all_key_nodes = {keyword} | set(processed_keys)
+    nodes = gdb.get_related_nodes(tuple(all_key_nodes), title)
 
-        # When summary does not contain search keys
-        if len(keyword_contained) == 0 and len(filtered_text) > 1:
-            filter_words = filter_words + ['we', 'our', 'in this paper']
-            filtered_text = _filter_sentences(filter_words)
-            summary = _summarize(filtered_text)
-            lem_summary, lem_map = lemmatize(summary, lem_to_kw=True)
-            keyword_contained = [key for key in all_key_nodes if is_include_word(key, lem_summary)]
-        
-        # Convert the lematized keyword to be original one
-        keyword_contained = [word for key in keyword_contained for word in lem_map[key]]
-        
-        # print(summary)
-        # print(keyword_contained)
-        # print('*' * 100)
-        
-        out += [[summary, keyword_contained]]
+    # Get all sentences related to keywords
+    filter_words = list(nodes) + list(all_key_nodes)
+    filtered_text = _filter_sentences(filter_words, abstract)
     
-    return out
+    # print(filtered_text)
+    # print(count_word(filtered_text))
+    
+    # Also get keywords from title
+    lem_title, lem_map_title = lemmatize(title, lem_to_kw=True)
+    
+    # Put the sentences into summarizer
+    summary = _summarize(filtered_text)
+    lem_summary, lem_map_summary = lemmatize(summary, lem_to_kw=True)
+    keyword_contained = [key for key in all_key_nodes if is_include_word(key, lem_summary + lem_title)]
+
+    # When summary does not contain search keys
+    if len(keyword_contained) == 0:
+        filter_words = filter_words + ['we', 'our', 'in this paper']
+        filtered_text = _filter_sentences(filter_words)
+        summary = _summarize(filtered_text)
+        lem_summary, lem_map_summary = lemmatize(summary, lem_to_kw=True)
+        keyword_contained = [key for key in all_key_nodes if is_include_word(key, lem_summary)]
+    
+    # Convert the lematized keyword to be original one
+    lem_map = {**lem_map_title, **lem_map_summary}
+    lem_abstract = lemmatize(abstract)
+    keyword_contained = [word for key in keyword_contained for word in lem_map[key]]
+    keyword_contained_in_abstract = [key for key in all_key_nodes if key not in keyword_contained and is_include_word(key, lem_abstract)]
+    
+    # print(summary)
+    # print(keyword_contained)
+    # print('*' * 100)
+    
+    return summary, keyword_contained + keyword_contained_in_abstract
+    
+    # out += [{'summary': summary, 
+    #          'summary_keywords': keyword_contained, 
+    #          'abstract_keywords': keyword_contained_in_abstract}]
+    
+    # return out
