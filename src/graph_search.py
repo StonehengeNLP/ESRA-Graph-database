@@ -31,7 +31,7 @@ vocab_set = set(vocab)
 @lru_cache(maxsize=128)
 def text_autocomplete(text, n=10):
     """suggest top 10 similar keywords based on the given text"""
-    suggested_list = list(filter(lambda k: k.startswith(text.lower()), vocab))
+    suggested_list = list(set(filter(lambda k: k.startswith(text.lower()), vocab)))
     return sorted(suggested_list, key=len)[:n]
 
 @lru_cache(maxsize=128)

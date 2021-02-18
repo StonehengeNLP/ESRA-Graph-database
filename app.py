@@ -1,6 +1,4 @@
-import torch
 import json
-import concurrent.futures
 
 from src import settings
 from src import graph_search as gs
@@ -86,19 +84,12 @@ def explanation():
         return jsonify({"msg": "Missing 'abstracts' parameter"}), 400
     
     try:
-        processed_keywords = gs.text_preprocessing(keyword)
+        processed_keywords = gs.text_preprocessing(keyword, flatten=True)
     except Exception as e:
         print(e)
         return jsonify({'msg': 'Database is not available'}), 503
     
-    num_gpus = torch.cuda.device_count()
-    with concurrent.futures.ThreadPoolExecutor(max_workers=num_gpus) as executor:
-        futures = []
-        for paper, abstract in zip(papers, abstracts):
-            args = (keyword, processed_keywords, paper.lower(), abstract)
-            futures += [executor.submit(ex.filtered_summarization, *args)]
-
-    explanations = [r.result() for r in futures]
+    explanations = ex.filtered_summarization(keyword, processed_keywords, papers, abstracts)
         
     return jsonify({'explanations': explanations}), 200
 
@@ -123,8 +114,11 @@ def list_of_facts():
     fact_list, others = gs.get_facts(tuple(processed_keywords))
     
     #############################
-    for fact in fact_list:
-        fact['papers'] = [id_2_arxiv[pid] for pid in fact['papers']]
+    try:
+        for fact in fact_list:
+            fact['papers'] = [id_2_arxiv[pid] for pid in fact['papers']]
+    except:
+        pass
     #############################
         
     # Conver paper to arxiv ids

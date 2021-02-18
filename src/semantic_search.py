@@ -53,11 +53,11 @@ def get_related_word(query, threshold=0.93, limit=3):
     for query, query_embedding in zip(queries, query_embeddings):
 
         cos_scores = util.pytorch_cos_sim(query_embedding, vocab_embeddings)[0]
-        scores, indexes = torch.topk(cos_scores, k=limit)
+        scores, indexes = torch.topk(cos_scores, k=50)
         
         out[query] = []
         for score, idx in zip(scores, indexes):
-            
+
             # check threshold and length limit
             if float(score) < threshold or len(out[query]) >= limit:
                 break

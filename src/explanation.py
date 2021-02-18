@@ -7,42 +7,36 @@ except LookupError:
     nltk.download('punkt')
   
 import re
+import spacy
 import torch
+import concurrent.futures
 from functools import lru_cache
-from transformers import pipeline
+from collections import defaultdict
 from .graph_database import GraphDatabase
-
-class MultiPipeline:
-    
-    def __init__(self, num_pipes=1):
-        self.pipelines = [pipeline("summarization", model='t5-small', device=i) for i in range(num_pipes)]
-        self.locks = [0] * num_pipes
-        self.num_pipes = num_pipes
-        
-    def __call__(self, *args, **kwargs):
-        for i in range(self.num_pipes):
-            if self.locks[i] == 0:
-                self.locks[i] = 1
-                result = self.pipelines[i](*args, **kwargs)
-                self.locks[i] = 0
-                return result
+from .multipipeline import MultiPipeline
     
 gdb = GraphDatabase()
 
-if torch.cuda.is_available():
-    t5_small = MultiPipeline(num_pipes=torch.cuda.device_count())
-else:
-    t5_small = pipeline("summarization", model='t5-small', device='cpu')
+t5_small = MultiPipeline()
+nlp = spacy.load('en_core_web_sm', disable=['tagger', 'parser', 'ner'])
 
-
+def lemmatize(text, lem_to_kw=False):
+    doc = nlp(text.lower())
+    lem_list = ' '.join([w.lemma_ for w in doc])
+    if lem_to_kw:
+        lem_map = defaultdict(set)
+        for w in doc:
+            lem_map[w.lemma_].add(w.orth_)
+        return lem_list, lem_map
+    return lem_list
+    
 def is_include_word(word, text):
     """ 
     return true if the word is included in the text
     
-    I have handled plural cases by adding just 's' and 'es'
     you could make it smarter :D
     """
-    r = re.search(r'\b{}(s|es){{0,1}}\b'.format(word), text.lower())
+    r = re.search(rf'\b{re.escape(word)}\b', text, re.IGNORECASE)
     return bool(r)
 
 def count_word(text):
@@ -65,15 +59,22 @@ def beautify(text):
     return text
 
 @lru_cache(maxsize=128)
-def _summarize(sentence, max_length, min_length):
+def _summarize(sentence, max_length=100, min_length=50):
     """
     this function is for summarizing sentences
     """
-    summ = t5_small(sentence, max_length=150, min_length=min_length)[0]['summary_text']
-    summ = beautify(summ)
-    return summ
+    word_count = count_word(sentence)
 
-def _filter_and_summarize(keywords: list, abstract: str) -> str:
+    if word_count < 50:
+        return sentence
+    else:
+        min_length = min(min_length, word_count)
+        max_length = min(max_length, word_count)
+        summ = t5_small(sentence, max_length=max_length, min_length=min_length)[0]['summary_text']
+        summ = beautify(summ)
+        return summ
+
+def _filter_sentences(keywords: list, abstract: str) -> str:
     """
     Filter some sentences from abstract by given keywords
     then summarize
@@ -82,26 +83,19 @@ def _filter_and_summarize(keywords: list, abstract: str) -> str:
     
     selected_sentence = []
     for sentence in sentences:
+        lem_sent = lemmatize(sentence)
         n = 0
         for name in keywords:
-            if is_include_word(name, sentence):
+            if is_include_word(name, lem_sent):
                 selected_sentence += [sentence]
                 n += 1
-            if n == 4:
+            if n == 3:
                 break
             
     new_sentence = ' '.join(selected_sentence)
-    word_count = count_word(new_sentence)
-    # print(new_sentence)
-
-    if word_count > 10:
-        min_length = min(50, word_count)
-        summ = _summarize(new_sentence, max_length=100, min_length=min_length)
-    else:
-        summ = ''
-    return summ
+    return new_sentence
         
-def filtered_summarization(keyword, processed_keys, title, abstract):
+def filtered_summarization(keyword:str, processed_keys:list, titles:list, abstracts:list) -> list:
     """
     This explanation method is to filter some sentences that include keyword(s)
     and then throw it into summarization model (we use t5-small in this case)
@@ -118,31 +112,41 @@ def filtered_summarization(keyword, processed_keys, title, abstract):
     
     If some cases are very strange, this should has fixed
     """
+    assert len(titles) == len(abstracts)
     
-    # Select a candicate word for each key that is in the given abstract 
-    flatten_key = {keyword}
-    for key in processed_keys:
-        if is_include_word(key, abstract):
-            flatten_key.add(key)
-        else:
-            for related_word in processed_keys[key]:
-                if is_include_word(related_word, abstract):
-                    flatten_key.add(related_word)
-                    break
-    flatten_key = list(flatten_key)            
+    out = []
+    for title, abstract in zip(titles, abstracts):
     
-    # Get all related keyword. Then filter and summarize
+        # Get all related keywords from graph
+        all_key_nodes = {keyword} | set(processed_keys)
+        nodes = gdb.get_related_nodes(tuple(all_key_nodes), title)
     
-    nodes = gdb.get_related_nodes(tuple(flatten_key), title)
-    
-    filter_words = nodes + flatten_key + ['we', 'our', 'in this paper']
-    summ = _filter_and_summarize(filter_words, abstract)
-    
-    # When summary does not contain search keys
-    keyword_contained = [key for key in flatten_key if is_include_word(key, summ)]
-    if len(keyword_contained) == 0:
-        filter_words = flatten_key + ['we', 'our', 'in this paper']
-        summ = _filter_and_summarize(filter_words, abstract)
-        keyword_contained = [key for key in flatten_key if is_include_word(key, summ)]
+        # Get all sentences related to keywords
+        filter_words = list(nodes) + list(all_key_nodes)
+        filtered_text = _filter_sentences(filter_words, abstract)
+        # print(filtered_text)
+        # print(count_word(filtered_text))
         
-    return summ, keyword_contained
+        # Put the sentences into summarizer
+        summary = _summarize(filtered_text)
+        lem_summary, lem_map = lemmatize(summary, lem_to_kw=True)
+        keyword_contained = [key for key in all_key_nodes if is_include_word(key, lem_summary)]
+
+        # When summary does not contain search keys
+        if len(keyword_contained) == 0 and len(filtered_text) > 1:
+            filter_words = filter_words + ['we', 'our', 'in this paper']
+            filtered_text = _filter_sentences(filter_words)
+            summary = _summarize(filtered_text)
+            lem_summary, lem_map = lemmatize(summary, lem_to_kw=True)
+            keyword_contained = [key for key in all_key_nodes if is_include_word(key, lem_summary)]
+        
+        # Convert the lematized keyword to be original one
+        keyword_contained = [word for key in keyword_contained for word in lem_map[key]]
+        
+        # print(summary)
+        # print(keyword_contained)
+        # print('*' * 100)
+        
+        out += [[summary, keyword_contained]]
+    
+    return out
