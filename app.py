@@ -92,7 +92,7 @@ def explanation():
         return jsonify({'msg': 'Database is not available'}), 503
     
     num_gpus = max(1, torch.cuda.device_count())
-    with concurrent.futures.ProcessPoolExecutor(max_workers=num_gpus) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=num_gpus) as executor:
         futures = []
         for paper, abstract in zip(papers, abstracts):
             args = (keyword, processed_keywords, paper.lower(), abstract)
