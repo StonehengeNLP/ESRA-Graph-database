@@ -22,3 +22,6 @@ venv.bak/
 tmp.py 
 tmp.txt
 corpus.txt
+
+# log files
+*.log

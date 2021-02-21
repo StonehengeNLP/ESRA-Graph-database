@@ -15,6 +15,10 @@ from collections import defaultdict
 from .graph_database import GraphDatabase
 from .multipipeline import MultiPipeline
     
+import logging
+logger = logging.getLogger("spacy")
+logger.setLevel(logging.ERROR)
+
 gdb = GraphDatabase()
 
 t5_small = MultiPipeline()
@@ -135,15 +139,16 @@ def filtered_summarization(keyword:str, processed_keys:list, title:str, abstract
     # When summary does not contain search keys
     if len(keyword_contained) == 0:
         filter_words = filter_words + ['we', 'our', 'in this paper']
-        filtered_text = _filter_sentences(filter_words)
+        filtered_text = _filter_sentences(filter_words, abstract)
         summary = _summarize(filtered_text)
         lem_summary, lem_map_summary = lemmatize(summary, lem_to_kw=True)
         keyword_contained = [key for key in all_key_nodes if is_include_word(key, lem_summary)]
     
     # Convert the lematized keyword to be original one
-    lem_map = {**lem_map_title, **lem_map_summary}
+    lem_keyword = lemmatize(keyword)
+    lem_map = {keyword: lem_keyword, **lem_map_title, **lem_map_summary}
     lem_abstract = lemmatize(abstract)
-    keyword_contained = [word for key in keyword_contained for word in lem_map[key]]
+    keyword_contained = [w for key in keyword_contained for word in key.split() for w in lem_map[word]]
     keyword_contained_in_abstract = [key for key in all_key_nodes if key not in keyword_contained and is_include_word(key, lem_abstract)]
     
     # print(summary)

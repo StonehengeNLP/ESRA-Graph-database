@@ -21,8 +21,9 @@ def group_words(words):
         d[name] += count
     return [name for name, count in d.items() if count > 1]
 
-words = [(clean_punc(p.name), p.count) for p in x]
+words = [(clean_punc(p.name), p.count) for p in x if len(p.name) > 1]
 names = group_words(words)
+names = sorted(list(set(names)))
 
 print(len(names))
 

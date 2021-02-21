@@ -15,3 +15,4 @@ transformers
 sentencepiece
 python-Levenshtein
 tltk
+spacy
