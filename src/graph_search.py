@@ -69,7 +69,7 @@ def _drop_insignificant_words(keywords: list):
             d[keyword] = c
     return list(d.keys())
 
-# @lru_cache(maxsize=128)
+@lru_cache(maxsize=128)
 def text_preprocessing(search_text, threshold=95, flatten=False, expand=True):
     """correct and filter n-gram keywords by similarity threshold"""
     search_text = search_text.lower()
