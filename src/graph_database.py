@@ -158,15 +158,25 @@ class GraphDatabase():
         return True
     
     def add_entity(self, entity_type, entity_name, confidence=1, **kwargs):
-        if self.is_entity_exist(entity_type, name=entity_name):
-            target_entity = self.get_entity(entity_type, name=entity_name)
+        name_lower = entity_name.lower()
+        if self.is_entity_exist(entity_type, name=name_lower):
+            target_entity = self.get_entity(entity_type, name=name_lower)
             target_entity.count += 1
+
+            if entity_name in target_entity.variants:
+                target_entity.variants[entity_name] += 1
+            elif target_entity.variants != None:
+                target_entity.variants[entity_name] = 1
+            else:
+                target_entity.variants = {entity_name: 1}
+                
             _weight_diff = (confidence - target_entity.weight) / target_entity.count
             target_entity.weight += _weight_diff
         else:
             entity_model = self.get_entity_model(entity_type)
-            target_entity = entity_model(name=entity_name)
+            target_entity = entity_model(name=name_lower)
             target_entity.weight = confidence
+            target_entity.variants = {entity_name: 1}
         target_entity.__dict__.update(kwargs)
         target_entity.save()
         return target_entity
