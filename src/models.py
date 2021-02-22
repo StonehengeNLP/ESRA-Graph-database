@@ -49,6 +49,7 @@ class RelatedTo(BaseRelation):
 class BaseEntity(neomodel.StructuredNode):
     name = neomodel.StringProperty(unique_index=True)
     variants = neomodel.JSONProperty()
+    best_variant = neomodel.StringProperty()
     count = neomodel.IntegerProperty(default=1)
     weight = neomodel.FloatProperty(default=0)
     create_at = neomodel.DateTimeFormatProperty(format=DATETIME_FORMAT, default_now=True)

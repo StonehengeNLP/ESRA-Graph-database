@@ -177,6 +177,9 @@ class GraphDatabase():
             target_entity = entity_model(name=name_lower)
             target_entity.weight = confidence
             target_entity.variants = {entity_name: 1}
+        
+        target_entity.best_variant = max(target_entity.variants, key=target_entity.variants.get)
+                
         target_entity.__dict__.update(kwargs)
         target_entity.save()
         return target_entity
