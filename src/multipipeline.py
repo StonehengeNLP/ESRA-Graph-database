@@ -10,7 +10,8 @@ class MultiPipeline:
                 self.num_pipes = torch.cuda.device_count()
             else:
                 self.num_pipes = num_pipes
-            self.pipelines = [pipeline("summarization", model='t5-small', device=i) for i in range(self.num_pipes)]
+            num_gpus = torch.cuda.device_count()
+            self.pipelines = [pipeline("summarization", model='t5-small', device=i//num_gpus) for i in range(self.num_pipes)]
             print(f'>>>> Initialize {self.num_pipes} pipelines with GPUs')
         else:
             self.num_pipes = 1
@@ -33,3 +34,4 @@ class MultiPipeline:
                     return result
             time.sleep(0.5)
             retries += 1
+

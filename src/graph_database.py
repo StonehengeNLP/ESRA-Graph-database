@@ -52,13 +52,13 @@ class GraphDatabase():
         WHERE n.name = $key
             AND NOT m:Paper
         RETURN DISTINCT
-            n.name as key,
+            n.best_variant as key,
             labels(n) as n_labels,
             e.weight as score,
             e.from_papers as papers,
             type(e) as type,
             startnode(e) = n as isSubject,
-            m.name as name,
+            m.best_variant as name,
             labels(m) as m_labels
         ORDER BY score DESC
         LIMIT 10
@@ -69,11 +69,11 @@ class GraphDatabase():
         WHERE n.name in $key_list
             AND NOT m:Paper
         RETURN DISTINCT
-            n.name as key,
+            n.best_variant as key,
             labels(n) as n_labels,
             type(e) as type,
             startnode(e) = n as isSubject,
-            m.name as name,
+            m.best_variant as name,
             labels(m) as m_labels
         LIMIT $limit
         """
@@ -85,7 +85,7 @@ class GraphDatabase():
         MATCH (n)-[r:appear_in]-(m)
         MATCH (n)-[t:appear_in]-(p)
         MATCH (m)<-[k]-(p)
-        RETURN DISTINCT n.name, labels(n), type(r), m.name, labels(m), type(k), p.name, labels(p)
+        RETURN DISTINCT n.best_variant, labels(n), type(r), m.best_variant, labels(m), type(k), p.best_variant, labels(p)
         LIMIT $limit;
         """
     CYPHER_D3_KEY_PAPER = \
@@ -278,10 +278,10 @@ class GraphDatabase():
             for relation in path[0]._relationships:
                 relation_type = relation.type
                 
-                start_node_name = relation._start_node._properties['name']
+                start_node_name = relation._start_node._properties['best_variant']
                 start_node_label = get_label(list(relation._start_node.labels))
 
-                end_node_name = relation._end_node._properties['name']
+                end_node_name = relation._end_node._properties['best_variant']
                 end_node_label = get_label(list(relation._end_node.labels))
 
                 tmp_path.append([
