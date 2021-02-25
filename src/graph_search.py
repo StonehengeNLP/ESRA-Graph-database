@@ -82,21 +82,28 @@ def text_preprocessing(search_text, threshold=95, flatten=False, expand=True):
         n = min(3, len(search_text_list))
         while n:
             keyword = ' '.join(search_text_list[i:i+n])
+
             if keyword in stop_words:
                 continue
             new_word, score = text_correction(keyword, length_vary=0.05)
+
             if score >= threshold:
                 new_keywords += [new_word]
-                i += n
-                break
+                ############################################
+                # FOR fixing the `medical nlp` case 
+                ############################################
+                # i += n
+                # break
+                ############################################
             else:
-                suggest_word = get_related_word(keyword, threshold=0.96, limit=1)[keyword]
+                suggest_word = get_related_word(keyword, threshold=0.9, limit=1)[keyword]
+
                 if suggest_word != [] and keyword not in suggest_word[0]:
                     new_keywords += [suggest_word[0]]
             n -= 1
         else:
             i += 1
-
+    
     # drop insignificant words
     new_keywords = _drop_insignificant_words(new_keywords)
 

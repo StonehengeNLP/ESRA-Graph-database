@@ -9,6 +9,7 @@ except LookupError:
 import re
 import spacy
 import torch
+import pandas as pd
 import concurrent.futures
 from functools import lru_cache
 from collections import defaultdict
@@ -23,6 +24,10 @@ gdb = GraphDatabase()
 
 t5_small = MultiPipeline()
 nlp = spacy.load('en_core_web_sm', disable=['tagger', 'parser', 'ner'])
+
+# # Open arxiv-to-summary file and convert it into dict
+# id_to_summary = pd.read_csv('data/csv/kaggle-arxiv-cscl-2020-12-18-with_summary.csv')
+# id_to_summary = id_to_summary.set_index('id')[['summary']].to_dict()['summary']
 
 def lemmatize(text, lem_to_kw=False):
     doc = nlp(text.lower())
@@ -120,10 +125,12 @@ def filtered_summarization(keyword:str, processed_keys:list, title:str, abstract
     # Get all related keywords from graph
     all_key_nodes = {keyword} | set(processed_keys)
     nodes = gdb.get_related_nodes(tuple(all_key_nodes), title)
-
+    lem_all_keys = [lemmatize(k) for k in all_key_nodes]
+    
     # Get all sentences related to keywords
     filter_words = list(nodes) + list(all_key_nodes)
-    filtered_text = _filter_sentences(filter_words, abstract)
+    lem_filter_words = [lemmatize(k) for k in filter_words]
+    filtered_text = _filter_sentences(lem_filter_words, abstract)
     
     # print(filtered_text)
     # print(count_word(filtered_text))
@@ -134,19 +141,25 @@ def filtered_summarization(keyword:str, processed_keys:list, title:str, abstract
     # Put the sentences into summarizer
     summary = _summarize(filtered_text)
     lem_summary, lem_map_summary = lemmatize(summary, lem_to_kw=True)
-    keyword_contained = [key for key in all_key_nodes if is_include_word(key, lem_summary + lem_title)]
-
+    keyword_contained = [key for key in lem_all_keys if is_include_word(key, lem_summary + lem_title)]
+    
     # When summary does not contain search keys
     if len(keyword_contained) == 0:
         filter_words = filter_words + ['we', 'our', 'in this paper']
         filtered_text = _filter_sentences(filter_words, abstract)
         summary = _summarize(filtered_text)
         lem_summary, lem_map_summary = lemmatize(summary, lem_to_kw=True)
-        keyword_contained = [key for key in all_key_nodes if is_include_word(key, lem_summary)]
+        keyword_contained = [key for key in lem_all_keys if is_include_word(key, lem_summary)]
+    
+    ###############################
+    # # When summary is empty
+    # if summary == '':
+    #     id_to_summary[]
+    ###############################
     
     # Convert the lematized keyword to be original one
-    lem_keyword = lemmatize(keyword)
-    lem_map = {keyword: lem_keyword, **lem_map_title, **lem_map_summary}
+    lem_keyword, lem_map_keyword = lemmatize(keyword, lem_to_kw=True)
+    lem_map = {**lem_map_keyword, **lem_map_title, **lem_map_summary}
     lem_abstract = lemmatize(abstract)
     keyword_contained = [w for key in keyword_contained for word in key.split() for w in lem_map[word]]
     keyword_contained_in_abstract = [key for key in all_key_nodes if key not in keyword_contained and is_include_word(key, lem_abstract)]
