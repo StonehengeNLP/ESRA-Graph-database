@@ -160,9 +160,9 @@ def filtered_summarization(keyword:str, processed_keys:list, title:str, abstract
     # Convert the lematized keyword to be original one
     lem_keyword, lem_map_keyword = lemmatize(keyword, lem_to_kw=True)
     lem_map = {**lem_map_keyword, **lem_map_title, **lem_map_summary}
-    lem_abstract = lemmatize(abstract)
     keyword_contained = [w for key in keyword_contained for word in key.split() for w in lem_map[word]]
-    keyword_contained_in_abstract = [key for key in all_key_nodes if key not in keyword_contained and is_include_word(key, lem_abstract)]
+    lem_abstract, lem_map_abstract = lemmatize(abstract, lem_to_kw=True)
+    keyword_contained_in_abstract = [w for key in lem_all_keys if key not in keyword_contained and is_include_word(key, lem_abstract) for w in lem_map_abstract[key]]
     
     # print(summary)
     # print(keyword_contained)

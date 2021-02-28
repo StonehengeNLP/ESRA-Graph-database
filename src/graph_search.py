@@ -104,8 +104,8 @@ def text_preprocessing(search_text, threshold=95, flatten=False, expand=True):
         else:
             i += 1
     
-    # drop insignificant words
-    new_keywords = _drop_insignificant_words(new_keywords)
+    # # drop insignificant words
+    # new_keywords = _drop_insignificant_words(new_keywords)
 
     # find other relavant words
     if expand:
