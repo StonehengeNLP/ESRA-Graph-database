@@ -299,7 +299,7 @@ class GraphDatabase():
         This function is for querying graph containing keywords and relation path regarding keywords
         and attached with fact list to visualize in search page
         """
-        n = len(keys) * 3
+        n = 10
         nodes = db.cypher_query(self.CYPHER_KEYWORD_GRAPH, {'key_list': list(keys), 'limit': n})
         return nodes
     
