@@ -129,9 +129,11 @@ def get_facts(keys: tuple):
     # facts
     fact_list, scheme = gdb.get_one_hops(keys)
     facts = [{k:v for k, v in zip(scheme, fact)} for fact in fact_list]
+    facts_without_paper = [[v for k, v in fact.items() if k not in ['papers', 'score']] for fact in facts]
+    
     # other relations
     other_relation, scheme = gdb.query_keyword_graph(keys)
-    others = [{k:v for k, v in zip(scheme, rel)} for rel in other_relation]
+    others = [{k:v for k, v in zip(scheme, rel)} for rel in other_relation if rel not in facts_without_paper]
     return facts, others
 
 @lru_cache(maxsize=128)
