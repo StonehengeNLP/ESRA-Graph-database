@@ -77,17 +77,36 @@ class GraphDatabase():
             labels(m) as m_labels
         LIMIT $limit
         """
-    CYPHER_D3_QUERY = \
-        """
-        MATCH (n:Paper)
+    # CYPHER_D3_QUERY = \
+    #     """
+    #     MATCH (n:Paper)
+    #     USING INDEX n:Paper(name)
+    #     WHERE n.name = $paper_title
+    #     MATCH (n)-[r:appear_in]-(m)
+    #     MATCH (n)-[t:appear_in]-(p)
+    #     MATCH (m)<-[k]-(p)
+    #     RETURN DISTINCT n.best_variant, labels(n), type(r), m.best_variant, labels(m), type(k), p.best_variant, labels(p)
+    #     LIMIT $limit;
+    #     """
+    CYPHER_D3_QUERY_1 = \
+        """MATCH (n:Paper)
         USING INDEX n:Paper(name)
         WHERE n.name = $paper_title
-        MATCH (n)-[r:appear_in]-(m)
-        MATCH (n)-[t:appear_in]-(p)
-        MATCH (m)<-[k]-(p)
-        RETURN DISTINCT n.best_variant, labels(n), type(r), m.best_variant, labels(m), type(k), p.best_variant, labels(p)
-        LIMIT $limit;
-        """
+        MATCH (m)-[r:appear_in]->(n)
+        WITH [m.best_variant, labels(m), type(r), n.best_variant, labels(n)] as out1
+        RETURN DISTINCT out1
+        LIMIT $limit;"""
+    CYPHER_D3_QUERY_2 = \
+        """MATCH (n:Paper)
+        USING INDEX n:Paper(name)
+        WHERE n.name = $paper_title
+        MATCH (m)-[r:appear_in]->(n)
+        MATCH (m)-[p]->(k)
+        MATCH (k)-[r2]-(n)
+        WHERE not k:Paper
+        WITH [m.best_variant, labels(m), type(p), k.best_variant, labels(k)] as out2
+        RETURN DISTINCT out2
+        LIMIT $limit;"""
     CYPHER_D3_KEY_PAPER = \
         """
         MATCH (m:Paper)
@@ -237,24 +256,22 @@ class GraphDatabase():
     def query_graph(self, paper_title: str, limit: int):
         """
         This function is for visualization in frontend using D3.js
-        and use only 'CYPHER_D3_QUERY'
+        and use only 'CYPHER_D3_QUERY_1' and 'CYPHER_D3_QUERY_2'
         """
         paper_title = paper_title.lower()
-        res = db.cypher_query(self.CYPHER_D3_QUERY, {'paper_title': paper_title, 'limit': limit})
-        res = res[0]
+        res_1 = db.cypher_query(self.CYPHER_D3_QUERY_1, {'paper_title': paper_title, 'limit': limit})
+        res_2 = db.cypher_query(self.CYPHER_D3_QUERY_2, {'paper_title': paper_title, 'limit': limit})
+        res = res_1[0] + res_2[0]
         get_label = lambda x: x[0] if x[0] != "BaseEntity" else x[1]
         relations = set()
         for row in res:
-            n_name, n_labels, r, m_name, m_labels, k, p_name, p_labels = row
+            n_name, n_labels, r, m_name, m_labels = row[0]
             n_labels = get_label(n_labels)
             m_labels = get_label(m_labels)
-            p_labels = get_label(p_labels)
             ent_1 = (n_name, n_labels)
             ent_2 = (m_name, m_labels)
-            ent_3 = (p_name, p_labels)
-            r1 = (r, ent_2, ent_1)
-            r2 = (k, ent_3, ent_2)
-            relations.update([r1,r2])
+            r1 = (r, ent_1, ent_2)
+            relations.add(r1)
             
         relations = list(relations)
         return relations 
