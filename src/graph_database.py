@@ -63,6 +63,23 @@ class GraphDatabase():
         ORDER BY score DESC
         LIMIT 10
         """
+    CYPHER_ONE_HOP_WITH_PAPER_ALLOWED = \
+        """
+        MATCH (n:BaseEntity)-[e]-(m)
+        USING INDEX n:BaseEntity(name)
+        WHERE n.name = $key
+                RETURN DISTINCT
+            n.best_variant as key,
+            labels(n) as n_labels,
+            e.weight as score,
+            e.from_papers as papers,
+            type(e) as type,
+            startnode(e) = n as isSubject,
+            m.best_variant as name,
+            labels(m) as m_labels
+        ORDER BY score DESC
+        LIMIT 10
+        """
     CYPHER_KEYWORD_GRAPH = \
         """
         MATCH (n)-[e]-(m)
@@ -251,6 +268,8 @@ class GraphDatabase():
     def get_one_hops(self, keys: list):
         key = '|'.join(keys)
         results = db.cypher_query(self.CYPHER_ONE_HOP, {'key': key})
+        if len(results[0]) < 3:
+            results = db.cypher_query(self.CYPHER_ONE_HOP_WITH_PAPER_ALLOWED, {'key': key})
         return results
     
     def query_graph(self, paper_title: str, limit: int):
