@@ -27,7 +27,7 @@ nlp = spacy.load('en_core_web_sm', disable=['tagger', 'parser', 'ner'])
 
 # # Open arxiv-to-summary file and convert it into dict
 # id_to_summary = pd.read_csv('data/csv/kaggle-arxiv-cscl-2020-12-18-with_summary.csv')
-# id_to_summary = id_to_summary.set_index('id')[['summary']].to_dict()['summary']
+# id_to_summary = id_to_summary.set_index('id')['summary'].to_dict()
 
 def lemmatize(text, lem_to_kw=False):
     doc = nlp(text.lower())
@@ -153,8 +153,11 @@ def filtered_summarization(keyword:str, processed_keys:list, title:str, abstract
     
     ###############################
     # # When summary is empty
-    # if summary == '':
     #     id_to_summary[]
+    if summary == '':
+        summary = _summarize(abstract)
+        lem_summary, lem_map_summary = lemmatize(summary, lem_to_kw=True)
+        keyword_contained = [key for key in lem_all_keys if is_include_word(key, lem_summary)]
     ###############################
     
     # Convert the lematized keyword to be original one
