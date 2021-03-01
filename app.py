@@ -1,3 +1,4 @@
+import re
 import json
 import torch
 import concurrent.futures
@@ -106,6 +107,9 @@ import pandas as pd
 df = pd.read_csv('data/csv/kaggle-arxiv-cscl-2020-12-18.csv')
 id_2_arxiv = df.id.to_dict()
 
+df.title = df.title.apply(lambda t: re.sub(r'\s+', ' ', t))
+arxiv_2_title = df.set_index('id')['title'].to_dict()
+
 @app.route('/facts')
 def list_of_facts():
     query = request.args.get('q')
@@ -135,11 +139,13 @@ def list_of_facts():
 
 @app.route('/graph')
 def graph():
-    paper_title = request.args.get('paper_title')
+    arxiv_id = request.args.get('arxiv_id')
     limit = request.args.get('limit', 30, type=int)
     
+    paper_title = arxiv_2_title.get(arxiv_id, None)
+    
     if not paper_title:
-        return jsonify({"msg": "Missing 'paper_title' parameter"}), 400
+        return jsonify({"msg": "Missing 'arxiv_id' parameter"}), 400
     
     graph = gs.query_graph(paper_title=paper_title, limit=limit)
     return {'graph': graph}, 200
@@ -147,13 +153,15 @@ def graph():
 @app.route('/kwGraph')
 def kwGraph():
     keys = request.args.get('keys')
-    paper_title = request.args.get('paper_title')
+    arxiv_id = request.args.get('arxiv_id')
     limit = request.args.get('limit', 30, type=int)
+
+    paper_title = arxiv_2_title.get(arxiv_id, None)
 
     if not keys:
         return jsonify({"msg": "Missing 'keys' parameter"}), 400
     if not paper_title:
-        jsonify({"msg": "Missing 'paper_title' parameter"}), 400
+        jsonify({"msg": "Missing 'arxiv_id' parameter"}), 400
 
     try:
         processed_keywords = gs.text_preprocessing(keys, flatten=True)

@@ -180,11 +180,11 @@
                 "operationId": "graph",
                 "parameters": [
                     {
-                        "name": "paper_title",
+                        "name": "arxiv_id",
                         "in": "query",
-                        "description": "Title of the paper",
+                        "description": "Arxiv id of the paper",
                         "required": true,
-                        "example": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding"
+                        "example": "1810.04805"
                     },
                     {
                         "name": "limit",
@@ -223,11 +223,11 @@
                         "example": "bert"
                     },
                     {
-                        "name": "paper_title",
+                        "name": "arxiv_id",
                         "in": "query",
-                        "description": "Title of the paper",
+                        "description": "Arxiv id of the paper",
                         "required": true,
-                        "example": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding"
+                        "example": "1810.04805"
                     },
                     {
                         "name": "limit",
