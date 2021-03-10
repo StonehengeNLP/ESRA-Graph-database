@@ -29,7 +29,7 @@ def swagger():
         
     swagger_env = settings.FLASK_ENV
     if swagger_env == 'production':
-        swagger_json['host'] = '13.250.112.78:58880'
+        swagger_json['host'] = 'kpac66ub1.asuscomm.com:58880'
         swagger_json['schemes'] = ['http']
 
     return swagger_json
