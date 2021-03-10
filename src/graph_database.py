@@ -63,7 +63,7 @@ class GraphDatabase():
             labels(m) as m_labels,
             m.count as m_count
         ORDER BY score DESC
-        LIMIT 10
+        LIMIT 30
         """
     CYPHER_ONE_HOP_WITH_PAPER_ALLOWED = \
         """
@@ -82,7 +82,7 @@ class GraphDatabase():
             labels(m) as m_labels,
             m.count as m_count
         ORDER BY score DESC
-        LIMIT 10
+        LIMIT 30
         """
     CYPHER_KEYWORD_GRAPH = \
         """
@@ -342,7 +342,7 @@ class GraphDatabase():
         This function is for querying graph containing keywords and relation path regarding keywords
         and attached with fact list to visualize in search page
         """
-        n = 10
+        n = 30
         nodes = db.cypher_query(self.CYPHER_KEYWORD_GRAPH, {'key_list': list(keys), 'limit': n})
         return nodes
     

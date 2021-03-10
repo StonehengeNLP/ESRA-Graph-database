@@ -157,14 +157,14 @@ def list_of_facts():
             if len(fact_2['name']) < LENGTH:
                 continue
             key_2 = fact_2['name']
-            lcs = pylcs.lcs(key_1, key_2)
+            lcs = pylcs.lcs(key_1.lower(), key_2.lower())
             
             short = key_1 if len(key_1) < len(key_2) else key_2
             if lcs >= max(len(key_1), len(key_2)) - 2:
                  fact_1['name'] = short
                  fact_2['name'] = short
     
-    # Combine same name nodes
+    # Combine same name nodes of keys
     max_key_count_type = sorted([(fact['key'], fact['n_count'], fact['n_labels'][1]) for fact in all_facts], reverse=True)
     
     prev_key = -1
@@ -177,23 +177,64 @@ def list_of_facts():
             key_2 = fact_2['key']
             count_2 = fact_2['n_count']
             
-            if this_fact == key_2 and this_count > 2 * count_2:
+            if this_fact.lower() == key_2.lower() and this_count > 2 * count_2:
                 fact_2['n_labels'][1] = this_label
                 
         prev_key = this_fact
         
+    # Combine same name nodes of other nodes
+    max_key_count_type = sorted([(fact['name'], fact['m_count'], fact['m_labels'][1]) for fact in all_facts], reverse=True)
+    
+    prev_key = -1
+    for this_fact, this_count, this_label in max_key_count_type:
+        
+        if prev_key == this_fact:
+            continue
+        
+        for fact_2 in all_facts:
+            key_2 = fact_2['name']
+            count_2 = fact_2['m_count']
+            
+            if this_fact.lower() == key_2.lower() and this_count > 2 * count_2:
+                fact_2['m_labels'][1] = this_label
+                
+        prev_key = this_fact
+    
+    def is_violate_refer_to(key, abbrv):
+        i = j = 0
+        key = key.lower()
+        abbrv = abbrv.lower()
+        while i < len(abbrv):
+            if abbrv[i] == key[j]:
+                i += 1
+                j += 1
+            else:
+                j += 1
+            if j >= len(key):
+                return True
+        return False
+    
     # Merge duplicate relations again
     get_hashable_object = lambda x: (x['key'], x['name'], x['type'], x['m_labels'][1], x['n_labels'][1])
     out = {}
     for fact in fact_list:
         key = get_hashable_object(fact)
         if key not in out:
+            # Check not violate refer_to
+            if key[2] == 'refer_to':
+                if len(key[0]) < len(key[1]):
+                    if is_violate_refer_to(key[1], key[0]):
+                        continue
+                else:
+                    if is_violate_refer_to(key[0], key[1]):
+                        continue
+                    
             out[key] = fact
         out[key]['papers'] += [arxiv_id for arxiv_id in fact['papers'] if arxiv_id not in out[key]['papers']]
     #############################
     
     # Conver paper to arxiv ids
-    return {'facts': list(out.values()), 'others': []}, 200
+    return {'facts': list(out.values())[:15], 'others': []}, 200
 
 @app.route('/graph')
 def graph():
