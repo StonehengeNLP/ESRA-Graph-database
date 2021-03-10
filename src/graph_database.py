@@ -39,7 +39,7 @@ class GraphDatabase():
         MATCH (n:BaseEntity)-[r1]-(m:BaseEntity)-[r2:appear_in]-(b:Paper)
         USING INDEX n:BaseEntity(name)
         USING INDEX b:Paper(name)
-        WHERE n.name = $key 
+        WHERE n.name in $key_list 
             AND b.name = $paper_title
             AND NOT m:Paper
         WITH COLLECT(DISTINCT m.name) as out
@@ -49,7 +49,7 @@ class GraphDatabase():
         """
         MATCH (n:BaseEntity)-[e]-(m)
         USING INDEX n:BaseEntity(name)
-        WHERE n.name = $key
+        WHERE n.name in $key_list
             AND NOT m:Paper
         RETURN DISTINCT
             n.best_variant as key,
@@ -69,7 +69,7 @@ class GraphDatabase():
         """
         MATCH (n:BaseEntity)-[e]-(m)
         USING INDEX n:BaseEntity(name)
-        WHERE n.name = $key
+        WHERE n.name in $key_list
         RETURN DISTINCT
             n.best_variant as key,
             labels(n) as n_labels,
@@ -138,7 +138,7 @@ class GraphDatabase():
         WHERE m.name = $paper_title
         MATCH (n:BaseEntity)
         USING INDEX n:BaseEntity(name)
-        WHERE n.name = $key
+        WHERE n.name in $key_list
         MATCH path = (n)-[*..2]-(m)-[k]-(p)
         WHERE type(k) <> 'cite'
         RETURN path 
@@ -273,10 +273,10 @@ class GraphDatabase():
         return relationship
         
     def get_one_hops(self, keys: list):
-        key = '|'.join(keys)
-        results = db.cypher_query(self.CYPHER_ONE_HOP, {'key': key})
+        # key = '|'.join(keys)
+        results = db.cypher_query(self.CYPHER_ONE_HOP, {'key_list': list(keys)})
         if len(results[0]) < 5:
-            results = db.cypher_query(self.CYPHER_ONE_HOP_WITH_PAPER_ALLOWED, {'key': key})
+            results = db.cypher_query(self.CYPHER_ONE_HOP_WITH_PAPER_ALLOWED, {'key_list': list(keys)})
         return results
     
     def query_graph(self, paper_title: str, limit: int):
@@ -306,11 +306,11 @@ class GraphDatabase():
         """
         Query path from keyword to paper node for visualize on frontend
         """
-        keys = '|'.join(keys).lower()
+        # keys = '|'.join(keys).lower()
         paper_title = paper_title.lower()
         paths = db.cypher_query(
             self.CYPHER_D3_KEY_PAPER, 
-            {'key': keys, 'paper_title':paper_title, 'limit': limit}
+            {'key_list': list(keys), 'paper_title':paper_title, 'limit': limit}
         )[0]
 
         new_paths = []
@@ -351,8 +351,8 @@ class GraphDatabase():
         """
         This function is for querying nodes and send it to summarization
         """
-        key = '|'.join(keys)
+        # key = '|'.join(keys)
  
         query = self.CYPHER_NODES_KEYS_PAPER.format(hops=max_hops)
-        nodes = db.cypher_query(query, {'key': key, 'paper_title': paper_title})
+        nodes = db.cypher_query(query, {'key_list': list(keys), 'paper_title': paper_title})
         return nodes[0][0][0]

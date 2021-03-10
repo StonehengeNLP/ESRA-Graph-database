@@ -1,9 +1,9 @@
 import re
 import json
 import torch
-import pylcs
 import concurrent.futures
 
+from src import utils
 from src import settings
 from src import graph_search as gs
 from src import explanation as ex
@@ -157,12 +157,12 @@ def list_of_facts():
             if len(fact_2['name']) < LENGTH:
                 continue
             key_2 = fact_2['name']
-            lcs = pylcs.lcs(key_1.lower(), key_2.lower())
+            lcs = utils.utilslongest_common_substring(key_1.lower(), key_2.lower())
             
-            short = key_1 if len(key_1) < len(key_2) else key_2
-            if lcs >= max(len(key_1), len(key_2)) - 2:
-                 fact_1['name'] = short
-                 fact_2['name'] = short
+            selected = key_1 if fact_1['m_count'] > fact_2['m_count'] else key_2
+            if len(lcs) >= max(len(key_1), len(key_2)) - 2:
+                 fact_1['name'] = selected
+                 fact_2['name'] = selected
     
     # Combine same name nodes of keys
     max_key_count_type = sorted([(fact['key'], fact['n_count'], fact['n_labels'][1]) for fact in all_facts], reverse=True)
