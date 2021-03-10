@@ -95,6 +95,7 @@ def text_preprocessing(search_text, threshold=95, flatten=False, expand=True):
                 keyword = ' '.join(search_text_list[i:i+n])
 
                 if keyword in stop_words:
+                    i += 1
                     continue
                 new_word, score = text_correction(keyword, length_vary=0.05)
 
