@@ -24,6 +24,8 @@ class MultiPipeline:
         retries = 0
         while True:
             if retries >= MAX_RETRIES:
+                for i in range(self.num_pipes):
+                    self.locks[i] = 0
                 raise Exception('Exceed maximum retries')
             for i in range(self.num_pipes):
                 if self.locks[i] == 0:

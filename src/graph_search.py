@@ -23,10 +23,15 @@ gdb = GraphDatabase()
 # Prepare data
 proj_dir = os.path.dirname(os.path.dirname(__file__))
 vocab_path = os.path.join(proj_dir, 'data/vocab.txt')
+full_vocab_path = os.path.join(proj_dir, 'data/full_vocab.txt')
 
 with open(vocab_path, encoding='utf-8') as f:
     vocab = [i.strip() for i in f.readlines()]
 vocab_set = set(vocab)
+
+with open(full_vocab_path, encoding='utf-8') as f:
+    full_vocab = [i.strip() for i in f.readlines()]
+full_vocab_set = set(full_vocab)
 
 @lru_cache(maxsize=128)
 def text_autocomplete(text, n=10):
@@ -74,35 +79,41 @@ def text_preprocessing(search_text, threshold=95, flatten=False, expand=True):
     """correct and filter n-gram keywords by similarity threshold"""
     search_text = search_text.lower()
     
-    search_text_list = search_text.split()
+    # Check exact match
+    if search_text in full_vocab_set:
+        new_keywords = [search_text]
     
-    i = 0
-    new_keywords = []
-    while i < len(search_text_list):
-        n = min(3, len(search_text_list))
-        while n:
-            keyword = ' '.join(search_text_list[i:i+n])
+    # Non exact match
+    else:
+        search_text_list = search_text.split()
+        
+        i = 0
+        new_keywords = []
+        while i < len(search_text_list):
+            n = min(3, len(search_text_list) - 1)
+            while n:
+                keyword = ' '.join(search_text_list[i:i+n])
 
-            if keyword in stop_words:
-                continue
-            new_word, score = text_correction(keyword, length_vary=0.05)
+                if keyword in stop_words:
+                    continue
+                new_word, score = text_correction(keyword, length_vary=0.05)
 
-            if score >= threshold:
-                new_keywords += [new_word]
-                ############################################
-                # FOR fixing the `medical nlp` case 
-                ############################################
-                i += n
-                break
-                ############################################
+                if score >= threshold:
+                    new_keywords += [new_word]
+                    ############################################
+                    # FOR fixing the `medical nlp` case 
+                    ############################################
+                    i += n
+                    break
+                    ############################################
+                else:
+                    suggest_word = get_related_word(keyword, threshold=0.9, limit=1)[keyword]
+
+                    if suggest_word != [] and keyword not in suggest_word[0]:
+                        new_keywords += [suggest_word[0]]
+                n -= 1
             else:
-                suggest_word = get_related_word(keyword, threshold=0.9, limit=1)[keyword]
-
-                if suggest_word != [] and keyword not in suggest_word[0]:
-                    new_keywords += [suggest_word[0]]
-            n -= 1
-        else:
-            i += 1
+                i += 1
     
     # # drop insignificant words
     # new_keywords = _drop_insignificant_words(new_keywords)

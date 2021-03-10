@@ -125,7 +125,7 @@ def filtered_summarization(keyword:str, processed_keys:list, title:str, abstract
     # Get all related keywords from graph
     all_key_nodes = {keyword} | set(processed_keys)
     nodes = gdb.get_related_nodes(tuple(all_key_nodes), title)
-    lem_all_keys = [lemmatize(k) for k in all_key_nodes]
+    lem_all_keys = [w for k in all_key_nodes for w in lemmatize(k).split()]
     
     # Get all sentences related to keywords
     filter_words = list(nodes) + list(all_key_nodes)
@@ -149,7 +149,7 @@ def filtered_summarization(keyword:str, processed_keys:list, title:str, abstract
         filtered_text = _filter_sentences(filter_words, abstract)
         summary = _summarize(filtered_text)
         lem_summary, lem_map_summary = lemmatize(summary, lem_to_kw=True)
-        keyword_contained = [key for key in lem_all_keys if is_include_word(key, lem_summary)]
+        keyword_contained = [key for key in lem_all_keys if is_include_word(key, lem_summary + lem_title)]
     
     ###############################
     # # When summary is empty
@@ -157,7 +157,7 @@ def filtered_summarization(keyword:str, processed_keys:list, title:str, abstract
     if summary == '':
         summary = _summarize(abstract)
         lem_summary, lem_map_summary = lemmatize(summary, lem_to_kw=True)
-        keyword_contained = [key for key in lem_all_keys if is_include_word(key, lem_summary)]
+        keyword_contained = [key for key in lem_all_keys if is_include_word(key, lem_summary + lem_title)]
     ###############################
     
     # Convert the lematized keyword to be original one
@@ -165,7 +165,7 @@ def filtered_summarization(keyword:str, processed_keys:list, title:str, abstract
     lem_map = {**lem_map_keyword, **lem_map_title, **lem_map_summary}
     keyword_contained = [w for key in keyword_contained for word in key.split() for w in lem_map[word]]
     lem_abstract, lem_map_abstract = lemmatize(abstract, lem_to_kw=True)
-    keyword_contained_in_abstract = [w for key in lem_all_keys if key not in keyword_contained and is_include_word(key, lem_abstract) for w in lem_map_abstract[key]]
+    keyword_contained_in_abstract = [w for key in lem_all_keys if key not in keyword_contained and is_include_word(key, lem_abstract + lem_title) for w in lem_map_abstract[key]]
     
     # print(summary)
     # print(keyword_contained)

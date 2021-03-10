@@ -22,6 +22,11 @@ def group_words(words):
     return [name for name, count in d.items() if count > 1]
 
 words = [(clean_punc(p.name), p.count) for p in x if len(p.name) > 1]
+
+print('full', len(words))
+with open('data/full_vocab.txt', 'w', encoding='utf-8') as f:
+    f.write('\n'.join(list(set([w for w, c in words]))))
+
 names = group_words(words)
 names = sorted(list(set(names)))
 

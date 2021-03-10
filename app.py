@@ -100,7 +100,7 @@ def explanation():
             args = (keyword, processed_keywords, paper.lower(), abstract)
             futures += [executor.submit(ex.filtered_summarization, *args)]
 
-    explanations = [r.result() for r in futures]
+    explanations = [r.result(timeout=10) for r in futures]
         
     return jsonify({'explanations': explanations}), 200
 
@@ -157,10 +157,10 @@ def list_of_facts():
             if len(fact_2['name']) < LENGTH:
                 continue
             key_2 = fact_2['name']
-            lcs = utils.utilslongest_common_substring(key_1.lower(), key_2.lower())
+            lcs = utils.LCSubStr(key_1.lower(), key_2.lower())
             
             selected = key_1 if fact_1['m_count'] > fact_2['m_count'] else key_2
-            if len(lcs) >= max(len(key_1), len(key_2)) - 2:
+            if lcs >= max(len(key_1), len(key_2)) - 2:
                  fact_1['name'] = selected
                  fact_2['name'] = selected
     

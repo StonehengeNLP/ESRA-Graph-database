@@ -1,12 +1,19 @@
-def longest_common_substring(string1, string2):
-    answer = ""
-    len1, len2 = len(string1), len(string2)
-    for i in range(len1):
-        match = ""
-        for j in range(len2):
-            if (i + j < len1 and string1[i + j] == string2[j]):
-                match += string2[j]
-            else:
-                if (len(match) > len(answer)): answer = match
-                match = ""
-    return answer
+def LCSubStr(X, Y):
+    
+    m = len(X)
+    n = len(Y)
+    
+    if m > n:
+        m, n = n, m
+        X, Y = Y, X
+    
+    i = j = 0
+    while i < m:
+        if X[i] == Y[j]:
+            i += 1
+            j += 1
+        else:
+            j += 1
+        if j >= n:
+            return i
+    return m
