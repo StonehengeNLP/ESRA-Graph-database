@@ -1,6 +1,7 @@
 import re
 import json
 import torch
+import pylcs
 import concurrent.futures
 
 from src import settings
@@ -141,8 +142,58 @@ def list_of_facts():
     fact_list_hash = set(get_hashable_object(a) for a in fact_list)
     others = [a for a in others if get_hashable_object(a) not in fact_list_hash]
     
+    #############################
+    # Temporary post processing
+    # 1. merge similar string 2 chars distance for > 10 keyword length
+    # 2. combine nodes with the same name but different types
+    #############################
+    LENGTH = 10
+    all_facts = fact_list + others
+    for fact_1 in all_facts:
+        if len(fact_1['name']) < LENGTH:
+            continue
+        key_1 = fact_1['name']
+        for fact_2 in all_facts:
+            if len(fact_2['name']) < LENGTH:
+                continue
+            key_2 = fact_2['name']
+            lcs = pylcs.lcs(key_1, key_2)
+            
+            short = key_1 if len(key_1) < len(key_2) else key_2
+            if lcs >= max(len(key_1), len(key_2)) - 2:
+                 fact_1['name'] = short
+                 fact_2['name'] = short
+    
+    # Combine same name nodes
+    max_key_count_type = sorted([(fact['key'], fact['n_count'], fact['n_labels'][1]) for fact in all_facts], reverse=True)
+    
+    prev_key = -1
+    for this_fact, this_count, this_label in max_key_count_type:
+        
+        if prev_key == this_fact:
+            continue
+        
+        for fact_2 in all_facts:
+            key_2 = fact_2['key']
+            count_2 = fact_2['n_count']
+            
+            if this_fact == key_2 and this_count > 2 * count_2:
+                fact_2['n_labels'][1] = this_label
+                
+        prev_key = this_fact
+        
+    # Merge duplicate relations again
+    get_hashable_object = lambda x: (x['key'], x['name'], x['type'], x['m_labels'][1], x['n_labels'][1])
+    out = {}
+    for fact in fact_list:
+        key = get_hashable_object(fact)
+        if key not in out:
+            out[key] = fact
+        out[key]['papers'] += [arxiv_id for arxiv_id in fact['papers'] if arxiv_id not in out[key]['papers']]
+    #############################
+    
     # Conver paper to arxiv ids
-    return {'facts': fact_list, 'others': others}, 200
+    return {'facts': list(out.values()), 'others': []}, 200
 
 @app.route('/graph')
 def graph():

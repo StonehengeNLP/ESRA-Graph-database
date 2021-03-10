@@ -54,12 +54,14 @@ class GraphDatabase():
         RETURN DISTINCT
             n.best_variant as key,
             labels(n) as n_labels,
+            n.count as n_count,
             e.weight as score,
             e.from_papers as papers,
             type(e) as type,
             startnode(e) = n as isSubject,
             m.best_variant as name,
-            labels(m) as m_labels
+            labels(m) as m_labels,
+            m.count as m_count
         ORDER BY score DESC
         LIMIT 10
         """
@@ -71,12 +73,14 @@ class GraphDatabase():
         RETURN DISTINCT
             n.best_variant as key,
             labels(n) as n_labels,
+            n.count as n_count,
             e.weight as score,
             e.from_papers as papers,
             type(e) as type,
             startnode(e) = n as isSubject,
             m.best_variant as name,
-            labels(m) as m_labels
+            labels(m) as m_labels,
+            m.count as m_count
         ORDER BY score DESC
         LIMIT 10
         """
@@ -88,11 +92,13 @@ class GraphDatabase():
         RETURN DISTINCT
             n.best_variant as key,
             labels(n) as n_labels,
+            n.count as n_count,
             e.from_papers as papers,
             type(e) as type,
             startnode(e) = n as isSubject,
             m.best_variant as name,
-            labels(m) as m_labels
+            labels(m) as m_labels,
+            m.count as m_count
         LIMIT $limit
         """
     # CYPHER_D3_QUERY = \
