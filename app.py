@@ -130,10 +130,17 @@ def list_of_facts():
     try:
         for fact in fact_list:
             fact['papers'] = [id_2_arxiv[pid] for pid in fact['papers']]
+        for fact in others:
+            fact['papers'] = [id_2_arxiv[pid] for pid in fact['papers']]
     except:
         pass
     #############################
-        
+    
+    # Filter
+    get_hashable_object = lambda x: (x['key'], x['name'], x['type'], x['m_labels'][1], x['n_labels'][1], len(x['papers']))
+    fact_list_hash = set(get_hashable_object(a) for a in fact_list)
+    others = [a for a in others if get_hashable_object(a) not in fact_list_hash]
+    
     # Conver paper to arxiv ids
     return {'facts': fact_list, 'others': others}, 200
 

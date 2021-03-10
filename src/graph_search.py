@@ -92,8 +92,8 @@ def text_preprocessing(search_text, threshold=95, flatten=False, expand=True):
                 ############################################
                 # FOR fixing the `medical nlp` case 
                 ############################################
-                # i += n
-                # break
+                i += n
+                break
                 ############################################
             else:
                 suggest_word = get_related_word(keyword, threshold=0.9, limit=1)[keyword]

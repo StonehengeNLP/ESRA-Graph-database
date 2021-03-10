@@ -54,7 +54,7 @@ class GraphDatabase():
         RETURN DISTINCT
             n.best_variant as key,
             labels(n) as n_labels,
-            e.weight * size(n.name) as score,
+            e.weight as score,
             e.from_papers as papers,
             type(e) as type,
             startnode(e) = n as isSubject,
@@ -68,7 +68,7 @@ class GraphDatabase():
         MATCH (n:BaseEntity)-[e]-(m)
         USING INDEX n:BaseEntity(name)
         WHERE n.name = $key
-                RETURN DISTINCT
+        RETURN DISTINCT
             n.best_variant as key,
             labels(n) as n_labels,
             e.weight as score,
@@ -88,6 +88,7 @@ class GraphDatabase():
         RETURN DISTINCT
             n.best_variant as key,
             labels(n) as n_labels,
+            e.from_papers as papers,
             type(e) as type,
             startnode(e) = n as isSubject,
             m.best_variant as name,
@@ -268,7 +269,7 @@ class GraphDatabase():
     def get_one_hops(self, keys: list):
         key = '|'.join(keys)
         results = db.cypher_query(self.CYPHER_ONE_HOP, {'key': key})
-        if len(results[0]) < 3:
+        if len(results[0]) < 5:
             results = db.cypher_query(self.CYPHER_ONE_HOP_WITH_PAPER_ALLOWED, {'key': key})
         return results
     
