@@ -54,7 +54,7 @@ class GraphDatabase():
         RETURN DISTINCT
             n.best_variant as key,
             labels(n) as n_labels,
-            e.weight as score,
+            e.weight * size(n.name) as score,
             e.from_papers as papers,
             type(e) as type,
             startnode(e) = n as isSubject,
