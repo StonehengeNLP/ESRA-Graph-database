@@ -68,7 +68,7 @@ def count_word(text):
 #     return text
 
 @lru_cache(maxsize=128)
-def _summarize(sentence, max_length=200, min_length=100):
+def _summarize(sentence, max_length=200, min_length=70):
     """
     this function is for summarizing sentences
     """
@@ -98,7 +98,7 @@ def _filter_sentences(keywords: list, abstract: str) -> str:
             if is_include_word(name, lem_sent):
                 selected_sentence += [sentence]
                 n += 1
-            if n == 1:
+            if n == 2:
                 break
             
     new_sentence = ' '.join(selected_sentence)
@@ -126,18 +126,21 @@ def filtered_summarization(keyword:str, processed_keys:list, title:str, abstract
     all_key_nodes = {keyword} | set(processed_keys)
     lem_all_keys = [w for k in all_key_nodes for w in lemmatize(k).split()]
     
-    # nodes = gdb.get_related_nodes(tuple(all_key_nodes), title)
-    # print('>>', nodes)
-    # filter_words = list(nodes) + list(all_key_nodes)
-    
     # # Get all sentences related to keywords
     filter_words = list(all_key_nodes)
     lem_filter_words = [lemmatize(k) for k in filter_words]
     filtered_text = _filter_sentences(lem_filter_words, abstract)
-
+    
+    # if len(filtered_text) < 6000:
+    #     nodes = gdb.get_related_nodes(tuple(all_key_nodes), title)
+    #     print('>>', nodes)
+    #     filter_words = list(nodes) + list(all_key_nodes)
+    #     lem_filter_words = [lemmatize(k) for k in filter_words]
+    #     filtered_text = _filter_sentences(lem_filter_words, abstract)
+        
     filtered_text = filtered_text[:10000]
     print('>>> filtered text', len(filtered_text))
-    print(filtered_text)
+    # print(filtered_text)
     # print(count_word(filtered_text))
     
     # Also get keywords from title
@@ -176,7 +179,7 @@ def filtered_summarization(keyword:str, processed_keys:list, title:str, abstract
     # print(keyword_contained)
     # print('*' * 100)
     
-    return summary, keyword_contained + keyword_contained_in_abstract
+    return summary.strip(), list(set(keyword_contained + keyword_contained_in_abstract))
     
     # out += [{'summary': summary, 
     #          'summary_keywords': keyword_contained, 

@@ -16,6 +16,7 @@ class MultiPipeline:
             print(f'>>>> Initialize {self.num_pipes} pipelines with GPUs')
         else:
             self.num_pipes = 1
+            # self.pipelines = [pipeline("summarization", model='t5-small', device=-1)]
             self.pipelines = [self._get_pipeline(device='cpu')]
             print('>>>> Initialize 1 pipelines with CPU')
 
