@@ -31,7 +31,7 @@ with open(vocab_embeddings_path, 'rb') as f:
     vocab_embeddings = pickle.load(f)
 
 @lru_cache(maxsize=128)
-def get_related_word(query, threshold=0.9, limit=5):
+def get_related_word(query, threshold=0.9, limit=2):
     """
     Semantic search function
     
@@ -62,8 +62,8 @@ def get_related_word(query, threshold=0.9, limit=5):
             if float(score) < threshold or len(out[query]) >= limit:
                 break
             
-            # # check query not include in the word
-            # if query not in vocab[idx]:
-            #     out[query] += [vocab[idx]]
+            # check query not include in the word
+            if query not in vocab[idx]:
+                out[query] += [vocab[idx]]
 
     return out

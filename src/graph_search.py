@@ -40,7 +40,7 @@ def text_autocomplete(text, n=10):
     return sorted(suggested_list, key=len)[:n]
 
 @lru_cache(maxsize=128)
-def text_correction(text, limit=1000, length_vary=0.2):
+def text_correction(text, limit=1000, cutoff=60):
     """
     correct the text to be matched to a node
     if it is already in the vocab set, return it immediately
@@ -58,7 +58,7 @@ def text_correction(text, limit=1000, length_vary=0.2):
     
     # cut-off threshold 
     best_score = score(best)
-    if best_score > 60:
+    if best_score > cutoff:
         return best, best_score
     return None, 0
 
@@ -75,7 +75,7 @@ def _drop_insignificant_words(keywords: list):
     return list(d.keys())
 
 @lru_cache(maxsize=128)
-def text_preprocessing(search_text, threshold=95, flatten=False, expand=True):
+def text_preprocessing(search_text, threshold=90, flatten=False, expand=True):
     """correct and filter n-gram keywords by similarity threshold"""
     search_text = search_text.lower()
     
@@ -98,10 +98,15 @@ def text_preprocessing(search_text, threshold=95, flatten=False, expand=True):
                     continue
                 
                 keyword = ' '.join(search_text_list[i:i+n])
-                new_word, score = text_correction(keyword, length_vary=0.05)
+                new_word, score = text_correction(keyword, cutoff=0.6)
 
                 if score >= threshold:
                     new_keywords += [new_word]
+
+                    suggest_word = get_related_word(new_word, threshold=0.9, limit=2)[new_word]
+
+                    if suggest_word != [] and new_word not in suggest_word[0]:
+                        new_keywords += [suggest_word[0]]
                     ############################################
                     # FOR fixing the `medical nlp` case 
                     ############################################
@@ -109,7 +114,7 @@ def text_preprocessing(search_text, threshold=95, flatten=False, expand=True):
                     break
                     ############################################
                 else:
-                    suggest_word = get_related_word(keyword, threshold=0.9, limit=1)[keyword]
+                    suggest_word = get_related_word(keyword, threshold=0.9, limit=2)[keyword]
 
                     if suggest_word != [] and keyword not in suggest_word[0]:
                         new_keywords += [suggest_word[0]]
@@ -129,7 +134,7 @@ def text_preprocessing(search_text, threshold=95, flatten=False, expand=True):
             flatten_list = []
             for k, v in new_keywords.items():
                 flatten_list += [k] + v
-            return flatten_list
+            return list(set(flatten_list))
 
     return new_keywords
 
