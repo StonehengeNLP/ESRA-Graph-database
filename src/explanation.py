@@ -22,7 +22,7 @@ logger.setLevel(logging.ERROR)
 
 gdb = GraphDatabase()
 
-t5_small = MultiPipeline()
+summarizer = MultiPipeline()
 nlp = spacy.load('en_core_web_sm', disable=['tagger', 'parser', 'ner'])
 
 # # Open arxiv-to-summary file and convert it into dict
@@ -54,21 +54,21 @@ def count_word(text):
     """
     return len(re.findall('\w+', text))
 
-def beautify(text):
-    """
-    manually beautify t5 output because the spell checker edit our specific name
-    return English text in a more beautiful format by following
-        1 uppercase first letter of each sentence
-        2 remove space in front of full stop
-    """
-    callback = lambda x: x.group(1).upper()
-    text = re.sub(r'^(\w)', callback, text)
-    text = re.sub(r' (\. \w)', callback, text)
-    text = re.sub(r' \.', '.', text)
-    return text
+# def beautify(text):
+#     """
+#     manually beautify t5 output because the spell checker edit our specific name
+#     return English text in a more beautiful format by following
+#         1 uppercase first letter of each sentence
+#         2 remove space in front of full stop
+#     """
+#     callback = lambda x: x.group(1).upper()
+#     text = re.sub(r'^(\w)', callback, text)
+#     text = re.sub(r' (\. \w)', callback, text)
+#     text = re.sub(r' \.', '.', text)
+#     return text
 
 @lru_cache(maxsize=128)
-def _summarize(sentence, max_length=100, min_length=50):
+def _summarize(sentence, max_length=200, min_length=100):
     """
     this function is for summarizing sentences
     """
@@ -79,8 +79,8 @@ def _summarize(sentence, max_length=100, min_length=50):
     else:
         min_length = min(min_length, word_count)
         max_length = min(max_length, word_count)
-        summ = t5_small(sentence, max_length=max_length, min_length=min_length)[0]['summary_text']
-        summ = beautify(summ)
+        summ = summarizer(sentence, max_length=max_length, min_length=min_length)
+        # summ = beautify(summ)
         return summ
 
 def _filter_sentences(keywords: list, abstract: str) -> str:
@@ -98,7 +98,7 @@ def _filter_sentences(keywords: list, abstract: str) -> str:
             if is_include_word(name, lem_sent):
                 selected_sentence += [sentence]
                 n += 1
-            if n == 2:
+            if n == 1:
                 break
             
     new_sentence = ' '.join(selected_sentence)
@@ -124,15 +124,20 @@ def filtered_summarization(keyword:str, processed_keys:list, title:str, abstract
         
     # Get all related keywords from graph
     all_key_nodes = {keyword} | set(processed_keys)
-    nodes = gdb.get_related_nodes(tuple(all_key_nodes), title)
     lem_all_keys = [w for k in all_key_nodes for w in lemmatize(k).split()]
     
-    # Get all sentences related to keywords
-    filter_words = list(nodes) + list(all_key_nodes)
+    # nodes = gdb.get_related_nodes(tuple(all_key_nodes), title)
+    # print('>>', nodes)
+    # filter_words = list(nodes) + list(all_key_nodes)
+    
+    # # Get all sentences related to keywords
+    filter_words = list(all_key_nodes)
     lem_filter_words = [lemmatize(k) for k in filter_words]
     filtered_text = _filter_sentences(lem_filter_words, abstract)
-    
-    # print(filtered_text)
+
+    filtered_text = filtered_text[:10000]
+    print('>>> filtered text', len(filtered_text))
+    print(filtered_text)
     # print(count_word(filtered_text))
     
     # Also get keywords from title

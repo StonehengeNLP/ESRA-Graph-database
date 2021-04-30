@@ -1,6 +1,8 @@
 import time
 import torch
 from transformers import pipeline
+from transformers import BartTokenizer, BartForConditionalGeneration
+
 
 class MultiPipeline:
     
@@ -14,7 +16,7 @@ class MultiPipeline:
             print(f'>>>> Initialize {self.num_pipes} pipelines with GPUs')
         else:
             self.num_pipes = 1
-            self.pipelines = [pipeline("summarization", model='t5-small', device=-1)]
+            self.pipelines = [self._get_pipeline(device='cpu')]
             print('>>>> Initialize 1 pipelines with CPU')
 
         self.locks = [0] * self.num_pipes
@@ -36,3 +38,18 @@ class MultiPipeline:
             time.sleep(0.5)
             retries += 1
 
+    def _get_pipeline(self, device):        
+        tokenizer = BartTokenizer.from_pretrained("sshleifer/distilbart-cnn-12-6")
+        model = BartForConditionalGeneration.from_pretrained("sshleifer/distilbart-cnn-12-6").to(device)
+
+        def summarize(article, **kwargs):
+            batch = tokenizer(article, truncation=True, padding='longest', return_tensors="pt").to(device)
+            translated = model.generate(
+                **batch, 
+                **kwargs,
+                num_beams=5,
+                )
+            summary = tokenizer.batch_decode(translated, skip_special_tokens=True)
+            return summary[0]
+        
+        return summarize

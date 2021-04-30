@@ -19,7 +19,7 @@ def group_words(words):
     d = defaultdict(int)
     for name, count in words:
         d[name] += count
-    return [name for name, count in d.items() if count > 1]
+    return [name for name, count in d.items() if count > 0]
 
 words = [(clean_punc(p.name), p.count) for p in x if len(p.name) > 1]
 

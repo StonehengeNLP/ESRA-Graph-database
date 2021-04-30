@@ -32,6 +32,7 @@ class EvaluateFor(BaseRelation):
     pass
 
 class AppearIn(BaseRelation):
+    from_section = neomodel.ArrayProperty(neomodel.StringProperty(), default=[])
     pass
 
 class AuthorOf(BaseRelation):

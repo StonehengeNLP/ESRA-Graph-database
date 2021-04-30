@@ -92,7 +92,7 @@ def explanation():
     except Exception as e:
         print(e)
         return jsonify({'msg': 'Database is not available'}), 503
-    
+    print('>', processed_keywords)
     num_gpus = max(1, torch.cuda.device_count())
     with concurrent.futures.ThreadPoolExecutor(max_workers=num_gpus) as executor:
         futures = []
@@ -208,6 +208,8 @@ def list_of_facts():
             if abbrv[i] == key[j]:
                 i += 1
                 j += 1
+            elif abbrv[i] == '2':
+                i += 1
             else:
                 j += 1
             if j >= len(key):

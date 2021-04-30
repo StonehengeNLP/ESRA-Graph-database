@@ -90,13 +90,14 @@ def text_preprocessing(search_text, threshold=95, flatten=False, expand=True):
         i = 0
         new_keywords = []
         while i < len(search_text_list):
-            n = min(3, len(search_text_list) - 1)
+            n = min(3, len(search_text_list) - i)
             while n:
-                keyword = ' '.join(search_text_list[i:i+n])
-
-                if keyword in stop_words:
+                
+                if search_text_list[i] in stop_words:
                     i += 1
                     continue
+                
+                keyword = ' '.join(search_text_list[i:i+n])
                 new_word, score = text_correction(keyword, length_vary=0.05)
 
                 if score >= threshold:
