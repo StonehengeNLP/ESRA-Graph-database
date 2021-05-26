@@ -68,7 +68,7 @@ def count_word(text):
 #     return text
 
 @lru_cache(maxsize=128)
-def _summarize(sentence, max_length=200, min_length=70):
+def _summarize(sentence, max_length=230, min_length=50):
     """
     this function is for summarizing sentences
     """

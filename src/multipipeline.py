@@ -40,8 +40,8 @@ class MultiPipeline:
             retries += 1
 
     def _get_pipeline(self, device):        
-        tokenizer = BartTokenizer.from_pretrained("sshleifer/distilbart-cnn-12-6")
-        model = BartForConditionalGeneration.from_pretrained("sshleifer/distilbart-cnn-12-6").to(device)
+        tokenizer = BartTokenizer.from_pretrained("sshleifer/distilbart-cnn-6-6")
+        model = BartForConditionalGeneration.from_pretrained("sshleifer/distilbart-cnn-6-6").to(device)
 
         def summarize(article, **kwargs):
             batch = tokenizer(article, truncation=True, padding='longest', return_tensors="pt").to(device)
