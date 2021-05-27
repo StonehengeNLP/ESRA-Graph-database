@@ -6,13 +6,11 @@ import pandas as pd
 from datetime import datetime
 from src.graph_database import GraphDatabase
 
+# Extracted information from entire cs.CL
 with open('data/pickle/kaggle_arxiv_cleaned.pickle', 'rb') as f:
     data = pickle.load(f)
     
-# with open('data/data_5000_mag.json') as f:
-#     meta = json.load(f)
-#     meta = {d['Id']:d for d in meta}
-
+# Scraped citation and references
 with open('data/pickle/kaggle_arxiv_cite_ref.pickle', 'rb') as f:
     cite_ref = pickle.load(f)['data']
     cite_ref = {d['arxiv_id']:d for d in cite_ref}
@@ -21,6 +19,7 @@ def clean(title):
     title = re.sub(r'\s+', ' ', title)
     return title
 
+# Arxiv cs.CL dataset
 df = pd.read_csv('data/csv/kaggle-arxiv-cscl-2020-12-18.csv')
 df.title = df.title.apply(clean)
 

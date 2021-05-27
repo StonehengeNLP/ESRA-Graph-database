@@ -25,10 +25,6 @@ gdb = GraphDatabase()
 t5_small = MultiPipeline()
 nlp = spacy.load('en_core_web_sm', disable=['tagger', 'parser', 'ner'])
 
-# # Open arxiv-to-summary file and convert it into dict
-# id_to_summary = pd.read_csv('data/csv/kaggle-arxiv-cscl-2020-12-18-with_summary.csv')
-# id_to_summary = id_to_summary.set_index('id')['summary'].to_dict()
-
 def lemmatize(text, lem_to_kw=False):
     doc = nlp(text.lower())
     lem_list = ' '.join([w.lemma_ for w in doc])
@@ -152,8 +148,6 @@ def filtered_summarization(keyword:str, processed_keys:list, title:str, abstract
         keyword_contained = [key for key in lem_all_keys if is_include_word(key, lem_summary + lem_title)]
     
     ###############################
-    # # When summary is empty
-    #     id_to_summary[]
     if summary == '':
         summary = _summarize(abstract)
         lem_summary, lem_map_summary = lemmatize(summary, lem_to_kw=True)
@@ -167,14 +161,4 @@ def filtered_summarization(keyword:str, processed_keys:list, title:str, abstract
     lem_abstract, lem_map_abstract = lemmatize(abstract, lem_to_kw=True)
     keyword_contained_in_abstract = [w for key in lem_all_keys if key not in keyword_contained and is_include_word(key, lem_abstract + lem_title) for w in lem_map_abstract[key]]
     
-    # print(summary)
-    # print(keyword_contained)
-    # print('*' * 100)
-    
     return summary, keyword_contained + keyword_contained_in_abstract
-    
-    # out += [{'summary': summary, 
-    #          'summary_keywords': keyword_contained, 
-    #          'abstract_keywords': keyword_contained_in_abstract}]
-    
-    # return out
