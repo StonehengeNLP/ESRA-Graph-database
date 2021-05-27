@@ -20,7 +20,7 @@ with open(vocab_path, encoding='utf-8') as f:
 if os.path.isfile(vocab_path) and not os.path.isfile(vocab_embeddings_path):
     
     print('building the vocab embeddings ...')
-    vocab_embeddings = model_roberta.encode(vocab)
+    vocab_embeddings = model_roberta.encode(vocab, 512, show_progress_bar=True)
     with open(vocab_embeddings_path, 'wb') as f:
         pickle.dump(vocab_embeddings, f)
     with open(vocab_path, 'w', encoding='utf-8') as f:
