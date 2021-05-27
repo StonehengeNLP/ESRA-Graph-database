@@ -63,7 +63,7 @@ class GraphDatabase():
             labels(m) as m_labels,
             m.count as m_count
         ORDER BY score DESC
-        LIMIT 30
+        LIMIT $limit
         """
     CYPHER_ONE_HOP_WITH_PAPER_ALLOWED = \
         """
@@ -82,7 +82,7 @@ class GraphDatabase():
             labels(m) as m_labels,
             m.count as m_count
         ORDER BY score DESC
-        LIMIT 30
+        LIMIT $limit
         """
     CYPHER_KEYWORD_GRAPH = \
         """
@@ -272,11 +272,14 @@ class GraphDatabase():
         relationship.save()
         return relationship
         
-    def get_one_hops(self, keys: list):
+    def get_one_hops(self, keys: list, limit: int):
         # key = '|'.join(keys)
-        results = db.cypher_query(self.CYPHER_ONE_HOP, {'key_list': list(keys)})
+        results = db.cypher_query(self.CYPHER_ONE_HOP, {'key_list': list(keys), 'limit': limit})
         if len(results[0]) < 5:
-            results = db.cypher_query(self.CYPHER_ONE_HOP_WITH_PAPER_ALLOWED, {'key_list': list(keys)})
+            results = db.cypher_query(
+                self.CYPHER_ONE_HOP_WITH_PAPER_ALLOWED, 
+                {'key_list': list(keys), 'limit': limit}
+            )
         return results
     
     def query_graph(self, paper_title: str, limit: int):

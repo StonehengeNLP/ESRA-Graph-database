@@ -114,6 +114,7 @@ arxiv_2_title = df.set_index('id')['title'].to_dict()
 @app.route('/facts')
 def list_of_facts():
     query = request.args.get('q')
+    limit = request.args.get('limit', 30, type=int)
     if not query:
         return jsonify({'msg': 'Missing query parameter'}), 400
     
@@ -125,7 +126,7 @@ def list_of_facts():
     except:
         return jsonify({'msg': 'Database is not available'}), 503
     
-    fact_list, others = gs.get_facts(tuple(processed_keywords))
+    fact_list, others = gs.get_facts(tuple(processed_keywords), limit)
     
     #############################
     try:
