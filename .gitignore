@@ -25,3 +25,4 @@ corpus.txt
 
 # log files
 *.log
+american_spelling.json
