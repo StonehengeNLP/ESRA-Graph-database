@@ -6,6 +6,7 @@ import requests
 import numpy as np
 import en_core_web_sm
 import json
+import torch
 
 from sklearn.cluster import DBSCAN
 from sentence_transformers import util
@@ -175,6 +176,10 @@ RELATION_TYPES = [
     'appear_in',
 ]
 
+# torch device
+device = 1 if torch.cuda.is_available() else 'cpu' 
+print(f'Use device: {device}')
+
 for entity_type in ENTITY_TYPES:
     data = [i.name for i in gdb.get_all_entities(entity_type)]
 
@@ -183,8 +188,8 @@ for entity_type in ENTITY_TYPES:
     print(len(data))
 
     # model = SentenceTransformer('paraphrase-distilroberta-base-v1')
-    model = load_sent_trans_model('paraphrase-distilroberta-base-v1')
-    sentence_embeddings = model.encode(data, 512, show_progress_bar=True)
+    model = load_sent_trans_model('paraphrase-distilroberta-base-v1', device=device)
+    sentence_embeddings = model.encode(data, 64, show_progress_bar=True)
 
     clustering = DBSCAN(eps=3, min_samples=2, n_jobs=-1).fit(sentence_embeddings)
     arr = clustering.labels_
