@@ -1,13 +1,22 @@
-import os
+import os, sys
 import torch
 import pickle
 
 from functools import lru_cache
 from sentence_transformers import SentenceTransformer, util
 
+# import load cached model function
+currentdir = os.path.dirname(os.path.realpath(__file__))
+parentdir = os.path.dirname(currentdir)
+sys.path.append(parentdir)
+
+from offline_setup_util import load_sent_trans_model
+
 # Prepare model
 device = 1 if torch.cuda.is_available() else 'cpu'
-model_roberta = SentenceTransformer('roberta-large-nli-mean-tokens', device=device)
+# model_roberta = SentenceTransformer('roberta-large-nli-mean-tokens', device=device)
+model_roberta = load_sent_trans_model('roberta-large-nli-mean-tokens', device=device)
+
 
 # Prepare data
 proj_dir = os.path.dirname(os.path.dirname(__file__))

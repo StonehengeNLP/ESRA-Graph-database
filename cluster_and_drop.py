@@ -5,6 +5,8 @@ import neomodel
 import requests
 import numpy as np
 import en_core_web_sm
+import json
+import torch
 
 from sklearn.cluster import DBSCAN
 from sentence_transformers import util
@@ -12,10 +14,16 @@ from sentence_transformers import SentenceTransformer
 
 from src import models
 from src.graph_database import GraphDatabase
+from offline_setup_util import load_sent_trans_model
 
 import nltk
 from nltk.stem.porter import *
-from nltk.corpus import stopwords
+try:
+    # nltk.data.find('corpus/stopwords')
+    from nltk.corpus import stopwords
+except ImportError:
+    nltk.download('stopwords')
+    from nltk.corpus import stopwords
 stop_words = set(stopwords.words('english')) 
 
 nlp = en_core_web_sm.load()
@@ -24,7 +32,12 @@ gdb = GraphDatabase()
 stemmer = PorterStemmer()
 
 url = "https://raw.githubusercontent.com/hyperreality/American-British-English-Translator/master/data/american_spellings.json"
-american_to_british_dict = requests.get(url).json()
+
+try:
+    with open('data/american_spelling.json', 'r') as f:
+        american_to_british_dict = json.load(f)    
+except FileNotFoundError:
+    american_to_british_dict = requests.get(url).json()
 
 def britishize(string):
     for american_spelling, british_spelling in american_to_british_dict.items():
@@ -163,6 +176,10 @@ RELATION_TYPES = [
     'appear_in',
 ]
 
+# torch device
+device = 1 if torch.cuda.is_available() else 'cpu' 
+print(f'Use device: {device}')
+
 for entity_type in ENTITY_TYPES:
     data = [i.name for i in gdb.get_all_entities(entity_type)]
 
@@ -170,8 +187,9 @@ for entity_type in ENTITY_TYPES:
     data = np.array(data)
     print(len(data))
 
-    model = SentenceTransformer('paraphrase-distilroberta-base-v1')
-    sentence_embeddings = model.encode(data, 512, show_progress_bar=True)
+    # model = SentenceTransformer('paraphrase-distilroberta-base-v1')
+    model = load_sent_trans_model('paraphrase-distilroberta-base-v1', device=device)
+    sentence_embeddings = model.encode(data, 64, show_progress_bar=True)
 
     clustering = DBSCAN(eps=3, min_samples=2, n_jobs=-1).fit(sentence_embeddings)
     arr = clustering.labels_

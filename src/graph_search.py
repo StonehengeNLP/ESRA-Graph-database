@@ -11,10 +11,11 @@ from .semantic_search import get_related_word
 
 import nltk
 try:
-    nltk.data.find('corpus/stopwords')
-except LookupError:
+    # nltk.data.find('corpus/stopwords')
+    from nltk.corpus import stopwords
+except ImportError:
     nltk.download('stopwords')
-from nltk.corpus import stopwords
+    from nltk.corpus import stopwords
 
 stop_words = set(stopwords.words('english'))  
 

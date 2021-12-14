@@ -1,3 +1,4 @@
+pandas
 neomodel==4.0.1
 python-dotenv>=0.15.0
 fuzzywuzzy
@@ -13,6 +14,6 @@ sentence-transformers
 nltk
 transformers
 sentencepiece
-python-Levenshtein
+# python-Levenshtein
 tltk
 spacy
